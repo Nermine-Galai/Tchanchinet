@@ -1,0 +1,144 @@
+/* Joueur actif : bleu pour le premier, dore pour le second */
+.duel-page #quiz {
+  --turn-color: #3e79aa;
+  --turn-text: #244b7a;
+  --turn-background: #e4f0fa;
+}
+.duel-page #quiz[data-player="2"] {
+  --turn-color: #bf962f;
+  --turn-text: #795516;
+  --turn-background: #faf0d6;
+}
+.duel-scoreboard {
+  direction: rtl;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(16 * var(--unit));
+}
+.duel-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(10 * var(--unit)) calc(16 * var(--unit));
+  font-size: max(13px, calc(16 * var(--unit)));
+}
+.player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.player-score {
+  margin-inline-start: auto;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.player-score strong {
+  font-size: max(18px, calc(22 * var(--unit)));
+}
+.player-active-label {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+[data-player="1"] #player-one-card,
+[data-player="2"] #player-two-card {
+  box-shadow: inset 0 0 0 2px var(--player-color);
+}
+[data-player="1"] .turn-two,
+[data-player="2"] .turn-one {
+  display: none;
+}
+[data-player="1"] .duel-player .turn-two,
+[data-player="2"] .duel-player .turn-one {
+  display: inline;
+  visibility: hidden;
+}
+.duel-page .question-content {
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+}
+.turn-label {
+  justify-self: center;
+  max-width: 100%;
+  padding: 2px 16px;
+  border: 1px solid var(--turn-color);
+  border-radius: 999px;
+  background: var(--turn-background);
+  color: var(--turn-text);
+  font-size: max(13px, calc(16 * var(--unit)));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.duel-page [data-status="ready"] .answer-row {
+  border-color: var(--turn-color);
+}
+.duel-page .answer-row:focus-within {
+  outline-color: var(--turn-color);
+}
+
+@media (min-width: 1101px) and (min-height: 501px) {
+  .duel-page .brand {
+    width: calc(350 * var(--unit));
+  }
+  .duel-scoreboard {
+    position: absolute;
+    bottom: calc(8 * var(--unit));
+    left: 50%;
+    width: calc(950 * var(--unit));
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 1100px), (max-height: 500px) {
+  .duel-scoreboard {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    gap: 6px;
+  }
+  .duel-player {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 2px 4px;
+    padding: 6px;
+    font-size: 13px;
+  }
+  .player-active-label {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .player-score {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    margin: 0;
+    font-size: 11px;
+  }
+  .duel-page .question-content {
+    inset: 10px 12px;
+    gap: 4px;
+  }
+  .turn-label {
+    font-size: 14px;
+  }
+}
+@media (min-width: 600px) and (max-width: 1100px) and (min-height: 701px) {
+  .duel-player {
+    padding: 10px 14px;
+    font-size: 20px;
+    gap: 4px 8px;
+  }
+  .player-active-label,
+  .player-score {
+    font-size: 16px;
+  }
+  .player-score strong {
+    font-size: 28px;
+  }
+  .duel-page .question-content {
+    inset: 18px 24px;
+  }
+  .turn-label {
+    font-size: 19px;
+  }
+}
