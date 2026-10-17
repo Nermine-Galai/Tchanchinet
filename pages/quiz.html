@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="جاوب على التشنشينة: ثلاث محاولات، تلميحة بعد زوز أخطاء، وإمكانية تخطّي السؤال.">
   <title>تشنشينات — اللعب</title>
-  <link rel="preload" as="image" href="assests/bg.4afab73f46.webp" type="image/webp">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="quiz-shared.css">
-  <link rel="stylesheet" href="quiz.css">
+  <link rel="preload" as="image" href="../assets/bg.4afab73f46.webp" type="image/webp">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/quiz-shared.css">
+  <link rel="stylesheet" href="../css/quiz.css">
 </head>
 <body class="quiz-page">
   <a class="skip-link" href="#main">انتقل إلى المحتوى</a>
@@ -19,22 +19,22 @@
     <header class="game-header">
       <div class="lives" aria-label="ثلاث محاولات متبقّية">
         <div class="chechias" aria-hidden="true">
-          <span class="attempt" data-attempt="1"><img class="chechia-red" src="assests/red_chechia.c6699b2dd5.webp" alt="" width="1254" height="1254"><img class="chechia-gray" src="assests/gray_chechia.f84f7a8a7c.webp" alt="" width="1254" height="1254"></span>
-          <span class="attempt" data-attempt="2"><img class="chechia-red" src="assests/red_chechia.c6699b2dd5.webp" alt="" width="1254" height="1254"><img class="chechia-gray" src="assests/gray_chechia.f84f7a8a7c.webp" alt="" width="1254" height="1254"></span>
-          <span class="attempt" data-attempt="3"><img class="chechia-red" src="assests/red_chechia.c6699b2dd5.webp" alt="" width="1254" height="1254"><img class="chechia-gray" src="assests/gray_chechia.f84f7a8a7c.webp" alt="" width="1254" height="1254"></span>
+          <span class="attempt" data-attempt="1"><img class="chechia-red" src="../assets/red_chechia.c6699b2dd5.webp" alt="" width="1254" height="1254"><img class="chechia-gray" src="../assets/gray_chechia.f84f7a8a7c.webp" alt="" width="1254" height="1254"></span>
+          <span class="attempt" data-attempt="2"><img class="chechia-red" src="../assets/red_chechia.c6699b2dd5.webp" alt="" width="1254" height="1254"><img class="chechia-gray" src="../assets/gray_chechia.f84f7a8a7c.webp" alt="" width="1254" height="1254"></span>
+          <span class="attempt" data-attempt="3"><img class="chechia-red" src="../assets/red_chechia.c6699b2dd5.webp" alt="" width="1254" height="1254"><img class="chechia-gray" src="../assets/gray_chechia.f84f7a8a7c.webp" alt="" width="1254" height="1254"></span>
         </div>
       </div>
-      <a class="brand" href="index.html" aria-label="تشنشينات، الصفحة الرئيسية"><img src="assests/tchanchinet_logo.c576f576c8.webp" alt="تشنشينات" width="1516" height="470"></a>
+      <a class="brand" href="../index.html" aria-label="تشنشينات، الصفحة الرئيسية"><img src="../assets/tchanchinet_logo.c576f576c8.webp" alt="تشنشينات" width="1516" height="470"></a>
       <div class="game-hud" aria-label="النقاط والوقت">
         <!-- Temporary CSS frames: score.png and countdown_timer.png are missing from the supplied pack. -->
         <p class="score-badge">النقاط: <strong id="score">0</strong></p>
-        <div class="timer-group"><div class="timer-badge"><span id="timer" dir="ltr">04:20</span></div></div>
+        <div class="timer-group"><div class="timer-badge"><span id="timer" dir="ltr">03:00</span></div></div>
       </div>
     </header>
 
     <main id="main" class="quiz-main">
       <section class="ornament-panel question-panel" aria-labelledby="question-text">
-        <img fetchpriority="high" class="panel-art" src="assests/questions_riddles_box.9d4d819e8c.webp" alt="" width="2172" height="724">
+        <img fetchpriority="high" class="panel-art" src="../assets/questions_riddles_box.9d4d819e8c.webp" alt="" width="2172" height="724">
         <div class="panel-content question-content"><h1 id="question-text">نصّ التشنشينة يكون هنا…</h1></div>
       </section>
 
@@ -51,14 +51,14 @@
           <p class="feedback-exhausted">الإجابة الصحيحة هي: <strong id="correct-answer">الإجابة تكون هنا</strong>.</p>
         </div>
         <section id="hint-panel" class="hint-panel" aria-labelledby="hint-title"><h2 id="hint-title">تلميحة صغيرة</h2><p id="hint-help" class="hint-placeholder"><span class="hint-locked">الخمسة تتفتح بعد زوز محاولات غالطة.</span><span class="hint-available">انزل على عين الخمسة باش تشوف التلميحة.</span></p><div id="hint-content" class="hint-content" role="status" aria-live="polite"><p id="hint-text">التلميحة تكون هنا. معلومة صغيرة تعاونك تلقى الإجابة…</p></div></section>
-        <div class="quiz-navigation"><a class="text-link" href="index.html">الصفحة الرئيسية</a><div class="quiz-actions"><button id="skip-question" class="skip-button" type="button">تخطّي السؤال</button><button id="next-question" class="next-button" type="button" disabled>السؤال التالي <span aria-hidden="true">←</span></button></div></div>
+        <div class="quiz-navigation"><a class="text-link" href="../index.html">الصفحة الرئيسية</a><div class="quiz-actions"><button id="skip-question" class="skip-button" type="button">تخطّي السؤال</button><button id="next-question" class="next-button" type="button" disabled>السؤال التالي <span aria-hidden="true">←</span></button></div></div>
       </div>
     </main>
     <button id="hint-toggle" class="hamsa-decoration hint-toggle" type="button" aria-label="إظهار التلميحة" aria-controls="hint-content" aria-describedby="hint-help" aria-expanded="false" disabled>
-      <img class="hamsa-closed" src="assests/hamsa_closed.fa600d37b2.webp" alt="" width="1254" height="1254">
-      <img class="hamsa-open" src="assests/hamsa_open.4b87739d10.webp" alt="" width="1254" height="1254">
+      <img class="hamsa-closed" src="../assets/hamsa_closed.fa600d37b2.webp" alt="" width="1254" height="1254">
+      <img class="hamsa-open" src="../assets/hamsa_open.4b87739d10.webp" alt="" width="1254" height="1254">
     </button>
   </div>
-<script src="quiz.js" defer></script>
+<script src="../js/quiz.js" defer></script>
 </body>
 </html>

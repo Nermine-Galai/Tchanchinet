@@ -50,7 +50,7 @@ body {
   color: var(--ink);
   font-family: var(--font);
   line-height: 1.5;
-  background: #aec9dc url("assests/bg.4afab73f46.webp") center center / cover fixed no-repeat;
+  background: #aec9dc url("../assets/bg.4afab73f46.webp") center center / cover fixed no-repeat;
 }
 
 h1,
@@ -281,7 +281,7 @@ button:disabled {
     min-height: 0;
     padding: 12px;
     border: 12px solid transparent;
-    border-image: url("assests/rules_box.2c1fac0e9b.webp") 100 220 100 220 fill / 16px 24px / 0 stretch;
+    border-image: url("../assets/rules_box.2c1fac0e9b.webp") 100 220 100 220 fill / 16px 24px / 0 stretch;
   }
 
   .page-actions {

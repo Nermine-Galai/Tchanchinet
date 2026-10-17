@@ -3,7 +3,7 @@
 
   // Opened directly without a finished game: go back home.
   if (raw === null) {
-    window.location.replace("index.html");
+    window.location.replace("../index.html");
     return;
   }
 

@@ -16,9 +16,9 @@ const hintToggle = document.getElementById("hint-toggle");
 const hintText = document.getElementById("hint-text");
 const hintContent = document.getElementById("hint-content");
 
-const TOTAL_TIME = 4 * 60 + 20;
-const POINTS_PER_QUESTION = 10;
-const HINT_PENALTY = 2;
+const TOTAL_TIME = 3 * 60;
+const POINTS_BY_ATTEMPT = [100, 80, 50];
+const POINTS_WITH_HINT = 25;
 const MAX_ATTEMPTS = 3;
 
 let questions = [];
@@ -31,27 +31,16 @@ let gameOver = false;
 let timer = TOTAL_TIME;
 let timerInterval = null;
 
-// Normalize Arabic answers before comparing them.
+// Only clean up spacing; accepted spellings belong in the JSON answer list.
 function normalizeAnswer(value) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[\u064B-\u065F\u0670]/g, "")
-    .replace(/[أإآ]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ؤ/g, "و")
-    .replace(/ئ/g, "ي")
-    .replace(/ة/g, "ه")
-    .replace(/ـ/g, "")
-    .replace(/[.,،؛:!?؟"'()\-]/g, "")
-    .replace(/\s+/g, " ");
+  return value.trim().replace(/\s+/g, " ");
 }
 
 // Load the riddles from the JSON file.
 async function loadQuestions() {
   try {
     const response = await fetch(
-      "tchanchinet/tunisian_riddles_40.json"
+      "../assets/tunisian_riddles_40.json"
     );
 
     if (!response.ok) {
@@ -141,6 +130,7 @@ function nextQuestion() {
 
   answerInput.value = "";
   answerInput.disabled = false;
+  answerInput.removeAttribute("aria-invalid");
 
   checkButton.disabled = false;
   skipButton.disabled = false;
@@ -150,7 +140,7 @@ function nextQuestion() {
   hintToggle.setAttribute("aria-expanded", "false");
 
   hintText.textContent = currentQuestion.hint;
-  correctAnswerDisplay.textContent = currentQuestion.answer;
+  correctAnswerDisplay.textContent = currentQuestion.answer[0];
 
   hintContent.classList.remove("is-visible");
 
@@ -193,24 +183,20 @@ function checkAnswer() {
   if (nextButton.disabled === false) return;
 
   const userAnswer = normalizeAnswer(answerInput.value);
-  const correctAnswer = normalizeAnswer(currentQuestion.answer);
 
   if (!userAnswer) {
     answerInput.focus();
     return;
   }
 
-  if (userAnswer === correctAnswer) {
-    score += POINTS_PER_QUESTION;
-
-    if (hintUsed) {
-      score -= HINT_PENALTY;
-    }
-
-    score = Math.max(0, score);
+  if (currentQuestion.answer.some((answer) => userAnswer === normalizeAnswer(answer))) {
+    score += hintUsed
+      ? POINTS_WITH_HINT
+      : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
     scoreDisplay.textContent = score;
 
     quiz.dataset.status = "correct";
+    answerInput.removeAttribute("aria-invalid");
     feedback.classList.remove("is-wrong", "is-exhausted");
     feedback.classList.add("is-correct");
 
@@ -219,6 +205,9 @@ function checkAnswer() {
   }
 
   attemptsLeft--;
+  answerInput.value = "";
+  answerInput.setAttribute("aria-invalid", "true");
+  quiz.dataset.status = "wrong";
 
   updateAttempts();
 
@@ -238,7 +227,10 @@ function checkAnswer() {
     feedback.classList.add("is-exhausted");
 
     endCurrentQuestion();
+    return;
   }
+
+  answerInput.focus();
 }
 
 // Finish the current question.

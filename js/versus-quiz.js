@@ -10,8 +10,8 @@ const hintToggle = document.getElementById("hint-toggle");
 const hintText = document.getElementById("hint-text");
 const hintContent = document.getElementById("hint-content");
 
-const POINTS_PER_QUESTION = 10;
-const HINT_PENALTY = 2;
+const POINTS_BY_ATTEMPT = [100, 80, 50];
+const POINTS_WITH_HINT = 25;
 const MAX_ATTEMPTS = 3;
 const QUESTIONS_PER_PLAYER = 5;
 const TOTAL_TURNS = QUESTIONS_PER_PLAYER * 2;
@@ -47,19 +47,9 @@ let hintUsed = false;
 let questionEnded = false;
 let gameOver = false;
 
+// Only clean up spacing; accepted spellings belong in the JSON answer list.
 function normalizeAnswer(value) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[\u064B-\u065F\u0670]/g, "")
-    .replace(/[أإآ]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ؤ/g, "و")
-    .replace(/ئ/g, "ي")
-    .replace(/ة/g, "ه")
-    .replace(/ـ/g, "")
-    .replace(/[.,،؛:!?؟"'()\-]/g, "")
-    .replace(/\s+/g, " ");
+  return value.trim().replace(/\s+/g, " ");
 }
 
 // Read and validate names from the URL (it can be edited by hand).
@@ -87,7 +77,7 @@ function readPlayers() {
 
 async function loadQuestions() {
   try {
-    const response = await fetch("tchanchinet/tunisian_riddles_40.json");
+    const response = await fetch("../assets/tunisian_riddles_40.json");
     if (!response.ok) throw new Error("Failed to load riddles.");
     questions = await response.json();
     if (!Array.isArray(questions) || questions.length < TOTAL_TURNS) {
@@ -170,7 +160,7 @@ function newQuestion() {
 
   questionText.textContent = currentQuestion.question;
   hintText.textContent = currentQuestion.hint;
-  correctAnswerDisplay.textContent = currentQuestion.answer;
+  correctAnswerDisplay.textContent = currentQuestion.answer[0];
 
   answerInput.value = "";
   answerInput.disabled = false;
@@ -215,11 +205,10 @@ function checkAnswer() {
 
   const player = players[currentPlayer];
 
-  if (userAnswer === normalizeAnswer(currentQuestion.answer)) {
-    player.score = Math.max(
-      0,
-      player.score + POINTS_PER_QUESTION - (hintUsed ? HINT_PENALTY : 0)
-    );
+  if (currentQuestion.answer.some((answer) => userAnswer === normalizeAnswer(answer))) {
+    player.score += hintUsed
+      ? POINTS_WITH_HINT
+      : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
     player.scoreEl.textContent = player.score;
 
     answerInput.removeAttribute("aria-invalid");
@@ -230,6 +219,7 @@ function checkAnswer() {
   }
 
   attemptsLeft--;
+  answerInput.value = "";
   updateAttempts();
   answerInput.setAttribute("aria-invalid", "true");
 
@@ -248,7 +238,7 @@ function checkAnswer() {
     return;
   }
 
-  answerInput.select();
+  answerInput.focus();
 }
 
 function revealHint() {
