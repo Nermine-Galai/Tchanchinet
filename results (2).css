@@ -1,0 +1,79 @@
+/* Resultat du mode solo */
+.result-content {
+  padding: calc(32 * var(--unit)) calc(110 * var(--unit));
+  text-align: center;
+}
+
+.result-content h1 {
+  color: var(--navy);
+  font-size: calc(38 * var(--unit));
+  font-weight: 700;
+}
+
+.result-content > p {
+  margin-top: calc(10 * var(--unit));
+  color: #4e6274;
+  font-size: calc(19 * var(--unit));
+}
+
+.final-score {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: calc(10 * var(--unit));
+  color: var(--navy);
+  font-size: calc(80 * var(--unit));
+  font-weight: 750;
+  line-height: 1.15;
+}
+
+.result-content .score-caption {
+  margin-top: 7px;
+  font-size: max(10px, calc(13 * var(--unit)));
+  font-weight: 650;
+}
+
+@media (max-width: 1100px), (max-height: 500px) {
+  .results-main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto auto;
+    align-content: center;
+    gap: 20px;
+  }
+  .result-panel {
+    min-height: clamp(300px, 50svh, 640px);
+  }
+  .result-content {
+    padding: 0;
+  }
+  .result-content h1 {
+    font-size: 28px;
+  }
+  .result-content > p {
+    font-size: 16px;
+  }
+  .final-score {
+    margin-top: 22px;
+    font-size: 70px;
+  }
+  .result-content .score-caption {
+    font-size: 14px;
+  }
+}
+@media (min-width: 600px) and (max-width: 1100px) and (min-height: 701px) {
+  .result-content h1 {
+    font-size: 40px;
+  }
+  .result-content > p {
+    font-size: 24px;
+  }
+  .final-score {
+    font-size: 100px;
+  }
+  .result-content .score-caption {
+    font-size: 21px;
+  }
+}
