@@ -4,28 +4,28 @@
   display: flex;
   justify-content: center;
   align-items: baseline;
-  gap: calc(9 * var(--unit));
+  gap: 9px;
   width: 100%;
   min-height: 0;
-  margin-top: calc(24 * var(--unit));
-  padding: calc(10 * var(--unit)) calc(14 * var(--unit));
+  margin-top: 24px;
+  padding: 10px 14px;
   border: 2px solid #e9eef1;
-  border-radius: calc(29 * var(--unit));
+  border-radius: 29px;
   background: linear-gradient(#f9fcfd, #dceaf4);
   box-shadow: 0 3px 1px #a7b3b7, 0 5px 6px rgb(34 48 67 / 20%), inset 0 -2px 0 #c2d2dc;
   color: #405271;
-  font-size: calc(24 * var(--unit));
+  font-size: 24px;
   font-weight: 700;
 }
 
 .score-badge strong {
-  font-size: calc(32 * var(--unit));
+  font-size: 32px;
   line-height: 1;
 }
 
-@media (min-width: 1101px) and (min-height: 501px) {
+@media (min-width: 1101px) {
   .quiz-page .score-badge {
-    height: calc(75 * var(--unit));
+    height: 75px;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
@@ -35,15 +35,12 @@
     display: block;
     width: 100%;
     text-align: center;
-  }
-
-  .quiz-page .score-badge strong {
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
 }
 
-@media (max-width: 1100px), (max-height: 500px) {
+@media (max-width: 1100px) {
   .score-badge {
     width: 92px;
     min-height: 36px;
@@ -57,7 +54,7 @@
     font-size: 22px;
   }
 }
-@media (min-width: 600px) and (max-width: 1100px) and (min-height: 701px) {
+@media (min-width: 600px) and (max-width: 1100px) {
   .score-badge {
     width: 155px;
     min-height: 52px;

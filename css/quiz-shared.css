@@ -8,7 +8,7 @@
   direction: rtl;
   grid-column: 1;
   grid-row: 1;
-  margin-top: calc(33 * var(--unit));
+  margin-top: 33px;
 }
 
 .chechias,
@@ -21,12 +21,12 @@
 }
 
 .chechias {
-  gap: calc(16 * var(--unit));
+  gap: 16px;
 }
 
 .attempt {
   flex: 0 0 auto;
-  width: calc(78 * var(--unit));
+  width: 78px;
 }
 
 .attempt img {
@@ -46,10 +46,10 @@
 
 .hamsa-decoration {
   position: absolute;
-  right: calc(18 * var(--unit));
-  bottom: calc(15 * var(--unit));
+  right: 18px;
+  bottom: 15px;
   z-index: -1;
-  width: calc(166 * var(--unit));
+  width: 166px;
   height: auto;
   pointer-events: none;
   filter: drop-shadow(0 5px 3px rgb(36 52 66 / 23%));
@@ -67,9 +67,6 @@
 
 .hint-toggle:not(:disabled):hover {
   transform: translateY(-3px);
-}
-
-.hint-toggle:not(:disabled):hover {
   filter: drop-shadow(0 0 9px rgb(220 178 83 / 65%));
 }
 
@@ -79,29 +76,29 @@
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
-  gap: calc(23 * var(--unit));
-  margin-top: calc(32 * var(--unit));
-  margin-right: calc(-10 * var(--unit));
+  gap: 23px;
+  margin-top: 32px;
+  margin-right: -10px;
 }
 
 .timer-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(5 * var(--unit));
+  gap: 5px;
 }
 
 .timer-badge {
   display: grid;
   place-items: center;
-  width: calc(105 * var(--unit));
-  height: calc(105 * var(--unit));
-  border: calc(7 * var(--unit)) solid #e6edf0;
+  width: 105px;
+  height: 105px;
+  border: 7px solid #e6edf0;
   border-radius: 50%;
   background: radial-gradient(circle at 40% 30%, #f6fafc, #d5e6ee);
-  box-shadow: 0 3px 7px rgb(36 51 70 / 30%), inset 0 0 0 calc(5 * var(--unit)) #588ead;
+  box-shadow: 0 3px 7px rgb(36 51 70 / 30%), inset 0 0 0 5px #588ead;
   color: #405271;
-  font-size: calc(22 * var(--unit));
+  font-size: 22px;
   font-weight: 750;
 }
 
@@ -115,7 +112,8 @@
 }
 
 .question-panel {
-  width: calc(1290 * var(--unit));
+  width: 100%;
+  max-width: 1290px;
   min-height: 0;
   display: grid;
   align-items: center;
@@ -128,12 +126,12 @@
   position: absolute;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
-  inset: calc(35 * var(--unit)) 10%;
+  inset: 35px 10%;
 }
 
 .question-content h1 {
   color: #353846;
-  font-size: max(17px, calc(28 * var(--unit)));
+  font-size: 28px;
   font-weight: 650;
   line-height: 1.5;
   width: 100%;
@@ -147,15 +145,16 @@
 
 .answer-form,
 .quiz-support {
-  width: calc(950 * var(--unit));
+  width: 90%;
+  max-width: 950px;
   margin: 0 auto;
 }
 
 .answer-row {
   position: relative;
-  gap: calc(12 * var(--unit));
-  min-height: calc(77 * var(--unit));
-  padding: calc(5 * var(--unit)) calc(27 * var(--unit)) calc(5 * var(--unit)) calc(6 * var(--unit));
+  gap: 12px;
+  min-height: 77px;
+  padding: 5px 27px 5px 6px;
   border: 2px solid #c4d5df;
   border-radius: 999px;
   background: linear-gradient(270deg, #155777, #3f7590 32%, #7e9bb0 62%, #b7c8d3);
@@ -166,13 +165,13 @@
   min-width: 0;
   flex: 1;
   width: 100%;
-  padding: calc(10 * var(--unit)) 0;
+  padding: 10px 0;
   border: 0;
   background: transparent;
   color: white;
   caret-color: #c8ffff;
   cursor: text;
-  font-size: calc(25 * var(--unit));
+  font-size: 25px;
   line-height: 1.4;
 }
 
@@ -193,13 +192,13 @@
 .send-button {
   position: relative;
   flex-shrink: 0;
-  min-width: calc(154 * var(--unit));
-  min-height: calc(63 * var(--unit));
+  min-width: 154px;
+  min-height: 63px;
   border: 1px solid #344e7b;
   border-radius: 999px;
   background: #163364;
   color: #f4f7ff;
-  font-size: calc(27 * var(--unit));
+  font-size: 27px;
   font-weight: 650;
   box-shadow: 0 3px 4px rgb(17 37 67 / 27%);
   transition: background-color 180ms ease;
@@ -215,17 +214,17 @@
 
 .feedback {
   min-height: 0;
-  padding: calc(6 * var(--unit)) calc(14 * var(--unit));
+  padding: 6px 14px;
   border: 1px solid transparent;
   border-radius: 12px;
   text-align: center;
   color: #354f67;
-  font-size: max(12px, calc(16 * var(--unit)));
+  font-size: 16px;
 }
 
 .hint-panel {
   margin-top: 0;
-  padding: calc(10 * var(--unit)) calc(20 * var(--unit));
+  padding: 10px 20px;
   border: 1px solid rgb(233 234 222 / 75%);
   border-radius: 14px;
   background: rgb(244 243 231 / 43%);
@@ -235,13 +234,13 @@
 .hint-panel h2 {
   margin-bottom: 0;
   color: #405370;
-  font-size: max(13px, calc(17 * var(--unit)));
+  font-size: 17px;
   font-weight: 650;
 }
 
 .hint-panel p {
   color: #3c556c;
-  font-size: max(12px, calc(15 * var(--unit)));
+  font-size: 15px;
 }
 
 .quiz-navigation {
@@ -275,7 +274,7 @@
 }
 
 .text-link {
-  font-size: max(12px, calc(14 * var(--unit)));
+  font-size: 14px;
   color: #213f60;
   text-underline-offset: 4px;
 }
@@ -393,45 +392,38 @@
   }
 }
 
-@media (min-width: 1101px) and (min-height: 501px) {
+/* Grands ecrans */
+@media (min-width: 1101px) {
   .quiz-page .game-screen {
-    --unit: min(1px, 0.072675vw, 0.130208svh);
-    min-height: 0;
-    height: 100svh;
     padding-bottom: 0;
     display: grid;
-    grid-template-rows: calc(210 * var(--unit)) minmax(0, 1fr);
+    grid-template-rows: 210px 1fr;
   }
 
   .quiz-page .game-header {
     position: relative;
-    display: block;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     min-height: 0;
     height: 100%;
-    padding: 0;
+    padding: 30px 40px 0;
   }
 
   .quiz-page .brand {
-    position: absolute;
-    top: calc(30 * var(--unit));
-    left: 50%;
-    width: calc(435 * var(--unit));
-    transform: translateX(-50%);
+    grid-row: 1;
+    width: 100%;
+    max-width: 435px;
   }
 
   .quiz-page .lives {
-    position: absolute;
-    top: calc(65 * var(--unit));
-    left: calc(70 * var(--unit));
-    margin: 0;
+    margin-top: 35px;
   }
 
   .quiz-page .chechias {
-    gap: calc(13 * var(--unit));
+    gap: 13px;
   }
 
   .quiz-page .attempt {
-    height: calc(78 * var(--unit));
+    height: 78px;
   }
 
   .quiz-page .attempt img {
@@ -441,25 +433,25 @@
   }
 
   .quiz-page .game-hud {
-    position: absolute;
-    top: calc(55 * var(--unit));
-    right: calc(55 * var(--unit));
-    margin: 0;
+    width: 100%;
+    max-width: 350px;
+    justify-self: end;
+    margin: 25px 0 0;
     display: grid;
-    grid-template-columns: calc(226 * var(--unit)) calc(105 * var(--unit));
-    gap: calc(20 * var(--unit));
+    grid-template-columns: minmax(0, 1fr) 105px;
+    gap: 20px;
   }
 
   .quiz-page .timer-group {
-    width: calc(105 * var(--unit));
+    width: 105px;
   }
 
   .quiz-page .quiz-main {
     min-height: 0;
     display: grid;
-    grid-template-rows: calc(220 * var(--unit)) calc(100 * var(--unit)) minmax(0, 1fr);
-    gap: calc(16 * var(--unit));
-    padding-bottom: calc(18 * var(--unit));
+    grid-template-rows: 220px 100px minmax(185px, 1fr);
+    gap: 16px;
+    padding-bottom: 18px;
   }
 
   .quiz-page .question-panel {
@@ -475,9 +467,9 @@
     min-height: 0;
     height: 100%;
     display: grid;
-    grid-template-rows: calc(40 * var(--unit)) calc(85 * var(--unit)) calc(40 * var(--unit));
+    grid-template-rows: 40px 85px 40px;
     align-content: start;
-    gap: calc(10 * var(--unit));
+    gap: 10px;
   }
 
   .quiz-page .feedback {
@@ -488,7 +480,7 @@
   .quiz-page .hint-panel {
     min-height: 0;
     display: grid;
-    grid-template-rows: calc(25 * var(--unit)) minmax(0, 1fr);
+    grid-template-rows: 25px minmax(0, 1fr);
   }
 
   .quiz-page .hint-panel h2 {
@@ -509,17 +501,18 @@
 
   .quiz-page .skip-button,
       .quiz-page .next-button {
-    min-height: calc(40 * var(--unit));
-    padding: calc(5 * var(--unit)) calc(14 * var(--unit));
+    min-height: 40px;
+    padding: 5px 14px;
   }
 
   .quiz-page .hamsa-decoration {
-    width: calc(140 * var(--unit));
+    width: 140px;
   }
 }
 
-@media (max-width: 1100px), (max-height: 500px) {
-    .question-panel > .panel-art {
+/* Tablettes et telephones */
+@media (max-width: 1100px) {
+  .question-panel > .panel-art {
     display: none;
   }
 
@@ -573,7 +566,7 @@
   }
 
   .question-content h1 {
-    font-size: clamp(18px, 2.6svh, 23px);
+    font-size: 20px;
   }
 
   .answer-form,
@@ -669,7 +662,8 @@
   }
 }
 
-@media (min-width: 600px) and (max-width: 1100px) and (min-height: 701px) {
+/* Tablettes */
+@media (min-width: 600px) and (max-width: 1100px) {
   .quiz-main {
     grid-template-rows: minmax(140px, 1fr) 68px 218px;
     gap: 12px;
@@ -690,7 +684,7 @@
   }
 
   .question-content h1 {
-    font-size: clamp(25px, 3vw, 32px);
+    font-size: 28px;
   }
 
   .answer-row input {

@@ -1,30 +1,30 @@
 /* Resultats des deux joueurs */
 .duel-result-content {
-  padding: calc(22 * var(--unit)) calc(110 * var(--unit));
+  padding: 22px 110px;
   text-align: center;
 }
 .duel-result-content h1 {
   color: var(--navy);
-  font-size: max(24px, calc(32 * var(--unit)));
+  font-size: 32px;
 }
 .winner-announcement {
   min-height: 30px;
   margin: 5px 0 15px;
   color: var(--navy);
-  font-size: max(14px, calc(18 * var(--unit)));
+  font-size: 18px;
   overflow-wrap: anywhere;
 }
 .duel-results-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(20 * var(--unit));
+  gap: 20px;
 }
 .result-player {
   padding: 10px 16px;
 }
 .result-player h2 {
   overflow-wrap: anywhere;
-  font-size: max(16px, calc(20 * var(--unit)));
+  font-size: 20px;
 }
 .duel-final-score {
   display: flex;
@@ -34,7 +34,7 @@
   font-size: 14px;
 }
 .duel-final-score span:first-child {
-  font-size: max(30px, calc(44 * var(--unit)));
+  font-size: 44px;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
@@ -61,7 +61,7 @@
   box-shadow: inset 0 0 0 2px var(--player-color);
 }
 
-@media (max-width: 1100px), (max-height: 500px) {
+@media (max-width: 1100px) {
   .versus-results-main {
     flex: 1;
     min-height: 0;
@@ -71,7 +71,7 @@
     gap: 20px;
   }
   .duel-result-panel {
-    min-height: clamp(300px, 50svh, 640px);
+    min-height: 350px;
   }
   .duel-result-content {
     padding: 0;
@@ -84,7 +84,7 @@
     gap: 10px;
   }
 }
-@media (min-width: 600px) and (max-width: 1100px) and (min-height: 701px) {
+@media (min-width: 600px) and (max-width: 1100px) {
   .duel-result-content h1 {
     font-size: 38px;
   }
