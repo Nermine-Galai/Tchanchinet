@@ -2,7 +2,7 @@
 
 A Tunisian riddle game ("تشنشينة") for the browser, built with plain HTML, CSS and
 JavaScript. The interface is in Arabic (right-to-left). Players answer riddles
-from a bank of 40 in two modes: **solo** against the clock, or **two players** on
+from a bank of 70 in two modes: **solo** against the clock, or **two players** on
 the same device.
 
 Mini web project, FIA3, ISSAT Sousse, academic year 2025/2026.
@@ -18,14 +18,26 @@ Mini web project, FIA3, ISSAT Sousse, academic year 2025/2026.
 
 Rules shared by both modes:
 
-- Each question gives **3 attempts**. Empty answers do not use an attempt.
+- Text riddles give **3 attempts**. Empty answers do not use an attempt.
+- QCM riddles show four buttons in a 2×2 grid, with **one choice** and no hints
+  or attempt icons. A correct choice earns **100 points**; a wrong choice shows
+  the correct answer. Use **Next** to continue.
 - A correct answer earns **100 points** on the first attempt, **80** on the second,
   or **50** on the third without a hint.
 - After 2 wrong answers the **hint** (khamsa) unlocks. Using it makes a correct
   third answer worth **25 points**.
 - After 3 wrong answers the correct answer is shown.
 - **Skip** moves on without points.
-- Accepted spellings and synonyms are listed in each riddle's `answer` array.
+- **Next** and **Skip** slide the question and answers left, then bring the next
+  ones in from the right (300 ms total). Reduced-motion mode skips the animation.
+- The bar above the question fills with elapsed time in solo mode and completed
+  questions (including skipped ones) in VS mode. Restart resets it.
+  It turns yellow with one-third remaining, then red with one-sixth remaining
+  (60 / 30 seconds in solo; 3 / 1 questions in VS).
+- **Restart** (عاود من الأول) resets scores, attempts, hints and questions; solo
+  also resets the timer, and VS starts again with player 1 and the same names.
+- Text riddles list accepted spellings in an `answer` array; QCM riddles use a
+  single `answer` string matching one of their `options`.
   Comparison ignores leading, trailing and repeated whitespace.
 
 ## Run the project
@@ -67,7 +79,7 @@ Tchanchinet/
 │   └── versus-results.css     Two-player result
 ├── assets/                   Artwork and riddle data
 │   ├── *.png, *.jpg, *.webp    Original artwork and optimised WebP images
-│   └── tunisian_riddles_40.json   The 40 riddles
+│   └── tunisian_riddles_40.json   The 70 riddles (original filename retained)
 └── tchanchinet/               Reference images
 ```
 
@@ -81,9 +93,11 @@ index.html → pages/versus.html → pages/versus-quiz.html → pages/versus-res
 ## How it works
 
 **Riddles.** [assets/tunisian_riddles_40.json](assets/tunisian_riddles_40.json)
-is a list of objects with `question` and `hint` strings and an `answer` array of
-accepted strings. The first answer is displayed after three wrong attempts.
-To add a riddle, add an object with the same fields to the file.
+contains 40 riddles with `type: "text"` and 30 with `type: "qcm"`. Each has
+`question` and `hint` strings. Text riddles use an `answer` array of accepted
+spellings; QCM riddles have four `options` and one `answer` string. After three
+wrong attempts, the first text answer or the full QCM answer is displayed.
+Text riddles use the input bar; QCM riddles use four buttons styled like that bar.
 
 **Relative paths.** `index.html` links to `pages/` and loads styles from `css/`.
 Pages in `pages/` load styles from `../css/`, scripts from `../js/`, and images

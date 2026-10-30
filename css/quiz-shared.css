@@ -1,4 +1,8 @@
 /* Quiz : solo et deux joueurs */
+.quiz-main {
+  overflow-x: clip;
+}
+
 .hint-toggle img {
   width: 100%;
   height: auto;
@@ -111,6 +115,44 @@
   white-space: nowrap;
 }
 
+.quiz-progress {
+  --progress-fill: linear-gradient(270deg, #155777, #7e9bb0);
+  display: block;
+  appearance: none;
+  width: 90%;
+  max-width: 950px;
+  height: 12px;
+  margin: 0 auto;
+  border: 1px solid #c4d5df;
+  border-radius: 999px;
+  background: #dceaf4;
+  overflow: hidden;
+}
+
+.quiz-progress[data-level="warning"] {
+  --progress-fill: linear-gradient(270deg, #c48b16, #f3d875);
+}
+
+.quiz-progress[data-level="danger"] {
+  --progress-fill: linear-gradient(270deg, #aa3232, #e48b80);
+}
+
+.quiz-progress::-webkit-progress-bar {
+  background: #dceaf4;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 3px rgb(22 56 86 / 18%);
+}
+
+.quiz-progress::-webkit-progress-value {
+  background: var(--progress-fill);
+  border-radius: 999px;
+}
+
+.quiz-progress::-moz-progress-bar {
+  background: var(--progress-fill);
+  border-radius: 999px;
+}
+
 .question-panel {
   width: 100%;
   max-width: 1290px;
@@ -144,13 +186,15 @@
 }
 
 .answer-form,
-.quiz-support {
+.quiz-support,
+.quiz-navigation {
   width: 90%;
   max-width: 950px;
   margin: 0 auto;
 }
 
-.answer-row {
+.answer-row,
+.qcm-option {
   position: relative;
   gap: 12px;
   min-height: 77px;
@@ -187,6 +231,56 @@
 .answer-row:focus-within {
   outline: 3px solid #214b75;
   outline-offset: 5px;
+}
+
+.qcm-options {
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 90%;
+  max-width: 950px;
+  margin: 0 auto;
+  align-self: center;
+}
+
+.qcm-option {
+  min-width: 0;
+  min-height: 66px;
+  padding: 10px 18px;
+  color: white;
+  font-size: 22px;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.qcm-option:not(:disabled):hover {
+  border-color: #183666;
+  filter: brightness(1.1);
+}
+
+.qcm-option[data-result="correct"] {
+  background: #276043;
+  border-color: #90c69f;
+}
+
+.qcm-option[data-result="wrong"] {
+  background: #963633;
+  border-color: #e4a5a0;
+}
+
+#quiz[data-type="qcm"] .qcm-options {
+  display: grid;
+}
+
+#quiz[data-type="qcm"] .answer-form,
+#quiz[data-type="qcm"] .hint-panel,
+#quiz[data-type="qcm"] .hamsa-decoration {
+  display: none;
+}
+
+#quiz[data-type="qcm"] .lives {
+  visibility: hidden;
 }
 
 .send-button {
@@ -254,23 +348,35 @@
 }
 
 .skip-button,
+.restart-button,
 .next-button {
   min-height: 38px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 650;
+  transition: background-color 180ms ease;
 }
 
 .skip-button {
   padding: 6px 17px;
-  border: 1px solid #b89b5e;
-  background: #f6ecd3;
-  color: #634c25;
-  transition: background-color 180ms ease;
+  border: 1px solid #b65a52;
+  background: #fbe9e7;
+  color: #8a2926;
 }
 
-.skip-button:hover {
-  background: #ead6a8;
+.skip-button:not(:disabled):hover {
+  background: #f5ceca;
+}
+
+.restart-button {
+  padding: 6px 17px;
+  border: 1px solid #527db6;
+  background: #e5effb;
+  color: #244b81;
+}
+
+.restart-button:not(:disabled):hover {
+  background: #ccdef5;
 }
 
 .text-link {
@@ -291,14 +397,22 @@
   color: var(--navy);
 }
 
+.skip-button:disabled,
+.restart-button:disabled,
 .next-button:disabled {
   color: #4f6275;
   background: rgb(229 237 241 / 50%);
   border-color: #91a8b9;
 }
 
+.next-button:not(:disabled) {
+  border-color: #4d8a61;
+  background: #e6f4e9;
+  color: #276043;
+}
+
 .next-button:not(:disabled):hover {
-  background: #f4ecd9;
+  background: #cce7d3;
 }
 
 [data-attempts-left="2"] [data-attempt="1"] .chechia-red,
@@ -449,7 +563,7 @@
   .quiz-page .quiz-main {
     min-height: 0;
     display: grid;
-    grid-template-rows: 220px 100px minmax(185px, 1fr);
+    grid-template-rows: 12px 220px 100px 135px 40px;
     gap: 16px;
     padding-bottom: 18px;
   }
@@ -467,7 +581,7 @@
     min-height: 0;
     height: 100%;
     display: grid;
-    grid-template-rows: 40px 85px 40px;
+    grid-template-rows: 40px 85px;
     align-content: start;
     gap: 10px;
   }
@@ -500,6 +614,7 @@
   }
 
   .quiz-page .skip-button,
+      .quiz-page .restart-button,
       .quiz-page .next-button {
     min-height: 40px;
     padding: 5px 14px;
@@ -507,6 +622,14 @@
 
   .quiz-page .hamsa-decoration {
     width: 140px;
+  }
+
+  .quiz-page #quiz[data-type="qcm"] .quiz-main {
+    grid-template-rows: 12px 220px 160px 75px 40px;
+  }
+
+  .quiz-page #quiz[data-type="qcm"] .quiz-support {
+    grid-template-rows: 40px;
   }
 }
 
@@ -520,7 +643,7 @@
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-rows: minmax(100px, 1fr) 54px 180px;
+    grid-template-rows: 12px minmax(100px, 1fr) 54px 102px 72px;
     gap: 8px;
   }
 
@@ -570,7 +693,8 @@
   }
 
   .answer-form,
-    .quiz-support {
+    .quiz-support,
+    .quiz-navigation {
     width: 100%;
     margin: 0;
     min-height: 0;
@@ -596,7 +720,7 @@
 
   .quiz-support {
     display: grid;
-    grid-template-rows: 32px 64px 72px;
+    grid-template-rows: 32px 64px;
     gap: 6px;
   }
 
@@ -660,12 +784,31 @@
     align-self: center;
     font-size: 14px;
   }
+
+  #quiz[data-type="qcm"] .quiz-main {
+    grid-template-rows: 12px minmax(100px, 1fr) 124px 32px 72px;
+  }
+
+  #quiz[data-type="qcm"] .quiz-support {
+    grid-template-rows: 32px;
+  }
+
+  .qcm-options {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .qcm-option {
+    min-height: 54px;
+    padding: 8px 12px;
+    font-size: 16px;
+  }
 }
 
 /* Tablettes */
 @media (min-width: 600px) and (max-width: 1100px) {
   .quiz-main {
-    grid-template-rows: minmax(140px, 1fr) 68px 218px;
+    grid-template-rows: 12px minmax(140px, 1fr) 68px 130px 80px;
     gap: 12px;
   }
 
@@ -698,7 +841,7 @@
   }
 
   .quiz-support {
-    grid-template-rows: 38px 84px 80px;
+    grid-template-rows: 38px 84px;
     gap: 8px;
   }
 
@@ -726,5 +869,18 @@
   .quiz-actions > button {
     min-height: 48px;
     font-size: 18px;
+  }
+
+  #quiz[data-type="qcm"] .quiz-main {
+    grid-template-rows: 12px minmax(140px, 1fr) 156px 42px 80px;
+  }
+
+  #quiz[data-type="qcm"] .quiz-support {
+    grid-template-rows: 38px;
+  }
+
+  .qcm-option {
+    min-height: 66px;
+    font-size: 22px;
   }
 }

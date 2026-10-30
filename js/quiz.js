@@ -5,9 +5,12 @@ const answerInput = document.getElementById("answer");
 const checkButton = document.getElementById("check-answer");
 const skipButton = document.getElementById("skip-question");
 const nextButton = document.getElementById("next-question");
+const restartButton = document.getElementById("restart-game");
+const optionButtons = document.querySelectorAll(".qcm-option");
 
 const scoreDisplay = document.getElementById("score");
 const timerDisplay = document.getElementById("timer");
+const progressBar = document.getElementById("quiz-progress");
 
 const feedback = document.getElementById("feedback");
 const correctAnswerDisplay = document.getElementById("correct-answer");
@@ -23,6 +26,7 @@ const MAX_ATTEMPTS = 3;
 
 let questions = [];
 let currentQuestion = null;
+let acceptedAnswers = [];
 let remainingQuestions = [];
 let attemptsLeft = MAX_ATTEMPTS;
 let score = 0;
@@ -66,10 +70,30 @@ async function loadQuestions() {
   }
 }
 
+function updateProgress(value) {
+  progressBar.value = value;
+  const remaining = progressBar.max - value;
+
+  if (remaining <= progressBar.max / 6) {
+    progressBar.dataset.level = "danger";
+  } else if (remaining <= progressBar.max / 3) {
+    progressBar.dataset.level = "warning";
+  } else {
+    progressBar.dataset.level = "normal";
+  }
+}
+
 // Initialize the game.
 function startGame() {
+  // Remove results from the previous game.
+  ["soloScore", "soloTotalQuestions", "soloRemainingQuestions", "soloFinishReason"].forEach((key) => {
+    sessionStorage.removeItem(key);
+  });
+
   score = 0;
   timer = TOTAL_TIME;
+  progressBar.max = TOTAL_TIME;
+  updateProgress(0);
   gameOver = false;
 
   remainingQuestions = [...questions];
@@ -78,6 +102,7 @@ function startGame() {
   remainingQuestions.sort(() => Math.random() - 0.5);
 
   scoreDisplay.textContent = score;
+  restartButton.disabled = false;
 
   nextQuestion();
 
@@ -89,6 +114,7 @@ function startGame() {
     timer--;
 
     timerDisplay.textContent = formatTime(timer);
+    updateProgress(TOTAL_TIME - timer);
 
     if (timer <= 0) {
       finishGame("time");
@@ -118,6 +144,9 @@ function nextQuestion() {
   }
 
   currentQuestion = remainingQuestions.pop();
+  acceptedAnswers = Array.isArray(currentQuestion.answer)
+    ? currentQuestion.answer
+    : [currentQuestion.answer];
 
   attemptsLeft = MAX_ATTEMPTS;
   hintUsed = false;
@@ -125,6 +154,14 @@ function nextQuestion() {
   quiz.dataset.attemptsLeft = attemptsLeft;
   quiz.dataset.status = "ready";
   quiz.dataset.hintState = "hidden";
+  quiz.dataset.type = currentQuestion.type;
+
+  optionButtons.forEach((button, index) => {
+    button.textContent = currentQuestion.options?.[index] || "";
+    button.disabled = false;
+    delete button.dataset.selected;
+    delete button.dataset.result;
+  });
 
   questionText.textContent = currentQuestion.question;
 
@@ -140,7 +177,7 @@ function nextQuestion() {
   hintToggle.setAttribute("aria-expanded", "false");
 
   hintText.textContent = currentQuestion.hint;
-  correctAnswerDisplay.textContent = currentQuestion.answer[0];
+  correctAnswerDisplay.textContent = acceptedAnswers[0];
 
   hintContent.classList.remove("is-visible");
 
@@ -151,7 +188,11 @@ function nextQuestion() {
   );
 
   updateAttempts();
-  answerInput.focus();
+  if (currentQuestion.type === "qcm") {
+    optionButtons[0].focus();
+  } else {
+    answerInput.focus();
+  }
 }
 
 // Update the remaining attempts and their artwork.
@@ -189,7 +230,7 @@ function checkAnswer() {
     return;
   }
 
-  if (currentQuestion.answer.some((answer) => userAnswer === normalizeAnswer(answer))) {
+  if (acceptedAnswers.some((answer) => userAnswer === normalizeAnswer(answer))) {
     score += hintUsed
       ? POINTS_WITH_HINT
       : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
@@ -204,7 +245,8 @@ function checkAnswer() {
     return;
   }
 
-  attemptsLeft--;
+  // A QCM has one choice; text riddles keep their three attempts.
+  attemptsLeft = currentQuestion.type === "qcm" ? 0 : attemptsLeft - 1;
   answerInput.value = "";
   answerInput.setAttribute("aria-invalid", "true");
   quiz.dataset.status = "wrong";
@@ -243,10 +285,21 @@ function endCurrentQuestion() {
   hintToggle.disabled = true;
   quiz.dataset.status =
     quiz.dataset.status === "correct" ? "correct" : "exhausted";
+
+  optionButtons.forEach((button) => {
+    button.disabled = true;
+    if (button.textContent === currentQuestion.answer) {
+      button.dataset.result = "correct";
+    } else if (button.dataset.selected === "true") {
+      button.dataset.result = "wrong";
+    }
+  });
+  nextButton.focus();
 }
 
 // Reveal the hint.
 function revealHint() {
+  if (currentQuestion.type === "qcm") return;
   if (gameOver || attemptsLeft !== 1 || hintUsed) return;
 
   hintUsed = true;
@@ -283,6 +336,15 @@ function finishGame(reason) {
 }
 
 // Event listeners.
+optionButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    if (button.disabled || gameOver) return;
+    button.dataset.selected = "true";
+    answerInput.value = button.textContent;
+    checkAnswer();
+  });
+});
+
 checkButton.addEventListener("click", checkAnswer);
 
 answerInput.addEventListener("keydown", (event) => {
@@ -291,9 +353,10 @@ answerInput.addEventListener("keydown", (event) => {
   }
 });
 
-nextButton.addEventListener("click", nextQuestion);
+nextButton.addEventListener("click", () => slideQuestion(nextQuestion));
 
-skipButton.addEventListener("click", skipQuestion);
+skipButton.addEventListener("click", () => slideQuestion(skipQuestion));
+restartButton.addEventListener("click", startGame);
 
 hintToggle.addEventListener("click", revealHint);
 
