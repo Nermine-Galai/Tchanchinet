@@ -23,6 +23,17 @@
           <p class="score-caption">نقطة</p>
         </div>
       </section>
+
+      <!-- Adding a new section for the leaderboard to display the top 5 scores. -->
+      <section class="ornament-panel leaderboard-panel" aria-labelledby="leaderboard-title">
+        <div class="leaderboard-content">
+          <h2 id="leaderboard-title">🏆 أفضل 5 نتائج</h2>
+          <ol id="best-scores-list" class="best-scores-list">
+            <!-- Scores will be inserted by JavaScript -->
+          </ol>
+        </div>
+      </section>
+
       <nav class="result-actions page-actions" aria-label="بعد نهاية اللعب">
         <a id="return-home" class="return-home game-button" href="../index.html">العودة إلى الصفحة الرئيسية</a>
       </nav>
