@@ -1,424 +1,126 @@
-const quiz = document.getElementById("quiz");
-const questionText = document.getElementById("question-text");
-const answerInput = document.getElementById("answer");
-const checkButton = document.getElementById("check-answer");
-const skipButton = document.getElementById("skip-question");
-const nextButton = document.getElementById("next-question");
-const restartButton = document.getElementById("restart-game");
-const optionButtons = document.querySelectorAll(".qcm-option");
-const progressBar = document.getElementById("quiz-progress");
-const feedback = document.getElementById("feedback");
-const correctAnswerDisplay = document.getElementById("correct-answer");
-const hintToggle = document.getElementById("hint-toggle");
-const hintText = document.getElementById("hint-text");
-const hintContent = document.getElementById("hint-content");
-
-const POINTS_BY_ATTEMPT = [100, 80, 50];
-const POINTS_WITH_HINT = 25;
-const MAX_ATTEMPTS = 3;
-const QUESTIONS_PER_PLAYER = 3;
+// same quiz rules, but two players take turns here
+const QUESTIONS_PER_PLAYER = 5;
 const TOTAL_TURNS = QUESTIONS_PER_PLAYER * 2;
-
 const MAX_NAME_LENGTH = 24;
-
-// Time penalty constants
-const TIME_PENALTY_INTERVAL = 10;
-const TIME_PENALTY_POINTS = 5;
-const MAX_TIME_PENALTY = 25;
-
-
 const players = {
   1: {
-    name: "",
-    score: 0,
+    name: "", score: 0,
     scoreEl: document.getElementById("player-one-score"),
     nameEl: document.getElementById("player-one-display"),
     turnEl: document.getElementById("player-one-turn"),
     card: document.getElementById("player-one-card"),
   },
   2: {
-    name: "",
-    score: 0,
+    name: "", score: 0,
     scoreEl: document.getElementById("player-two-score"),
     nameEl: document.getElementById("player-two-display"),
     turnEl: document.getElementById("player-two-turn"),
     card: document.getElementById("player-two-card"),
   },
 };
-
-let questions = [];
 let queue = [];
-let currentQuestion = null;
-let acceptedAnswers = [];
 let currentPlayer = 1;
 let turnsPlayed = 0;
-let attemptsLeft = MAX_ATTEMPTS;
-let hintUsed = false;
-let questionEnded = false;
-let gameOver = false;
 
-
-//temps de debut de reponse
-let questionStartTime = 0;
-
-// Only clean up spacing; accepted spellings belong in the JSON answer list.
-function normalizeAnswer(value) {
-  return value.trim().replace(/\s+/g, " ");
-}
-
-// Read and validate names from the URL (it can be edited by hand).
+// get both names from the url and check that neither is empty
 function readPlayers() {
   const params = new URLSearchParams(window.location.search);
-  const p1 = (params.get("player1") || "").trim().slice(0, MAX_NAME_LENGTH);
-  const p2 = (params.get("player2") || "").trim().slice(0, MAX_NAME_LENGTH);
-
-  if (!p1 || !p2) {
-    window.location.replace("versus.html");
-    return false;
+  for (const n of [1, 2]) {
+    const name = (params.get(`player${n}`) || "").trim().slice(0, MAX_NAME_LENGTH);
+    if (!name) {
+      window.location.replace("versus.html");
+      return false;
+    }
+    players[n].name = name;
+    players[n].nameEl.textContent = name;
+    players[n].turnEl.textContent = name;
   }
-
-  players[1].name = p1;
-  players[2].name = p2;
-
-  [1, 2].forEach((n) => {
-    players[n].nameEl.textContent = players[n].name;
-    players[n].turnEl.textContent = players[n].name;
-    players[n].scoreEl.textContent = "0";
-  });
-
   return true;
 }
 
-async function loadQuestions() {
-  try {
-    const response = await fetch("../assets/tunisian_riddles_40.json");
-    if (!response.ok) throw new Error("Failed to load riddles.");
-    questions = await response.json();
-    if (!Array.isArray(questions) || questions.length < TOTAL_TURNS) {
-      throw new Error("Not enough questions.");
-    }
-    startGame();
-  } catch (error) {
-    console.error(error);
-    questionText.textContent =
-      "ما نجّمنـاش نحمّلو التشنشينات. عاود افتح اللعبة باستعمال Live Server.";
-    checkButton.disabled = true;
-    skipButton.disabled = true;
-    nextButton.disabled = true;
-  }
-}
-
-function updateProgress(value) {
-  progressBar.value = value;
-  const remaining = progressBar.max - value;
-
-  if (remaining <= progressBar.max / 6) {
-    progressBar.dataset.level = "danger";
-  } else if (remaining <= progressBar.max / 3) {
-    progressBar.dataset.level = "warning";
-  } else {
-    progressBar.dataset.level = "normal";
-  }
-}
-
+// start again with the same names and zero scores
 function startGame() {
   sessionStorage.removeItem("versusResult");
-  [1, 2].forEach((n) => {
+  for (let n = 1; n <= 2; n++) {
     players[n].score = 0;
     players[n].scoreEl.textContent = "0";
+  }
+  // copy the list before shuffling so replay still has all the questions
+  queue = questions.slice();
+  queue.sort(function () {
+    return Math.random() - 0.5;
   });
-  queue = [...questions].sort(() => Math.random() - 0.5);
   turnsPlayed = 0;
-  progressBar.max = TOTAL_TURNS;
-  updateProgress(0);
   currentPlayer = 1;
   gameOver = false;
+  progressBar.max = TOTAL_TURNS;
+  updateProgress(0);
   restartButton.disabled = false;
   newQuestion();
 }
 
+// show whose turn it is on the cards and for screen readers
 function setActivePlayer(n) {
   currentPlayer = n;
-  quiz.dataset.player = String(n);
-
-  [1, 2].forEach((i) => {
-    const p = players[i];
+  quiz.dataset.player = n;
+  for (const i of [1, 2]) {
+    const player = players[i];
     const active = i === n;
     const label = i === 1 ? "اللاعب الأول" : "اللاعب الثاني";
-    p.card.setAttribute(
-      "aria-label",
-      `${label}، ${p.name}${active ? "، دوره توّا" : ""}`
-    );
-    if (active) {
-      p.card.setAttribute("aria-current", "true");
-    } else {
-      p.card.removeAttribute("aria-current");
-    }
-  });
-}
-
-function updateAttempts() {
-  quiz.dataset.attemptsLeft = String(attemptsLeft);
-
-  document.querySelectorAll(".attempt").forEach((attempt) => {
-    attempt.classList.toggle(
-      "is-lost",
-      Number(attempt.dataset.attempt) > attemptsLeft
-    );
-  });
-
-  const lives = document.querySelector(".lives");
-  if (lives) {
-    lives.setAttribute("aria-label", `${attemptsLeft} محاولات متبقّية`);
+    player.card.setAttribute("aria-label", `${label}، ${player.name}${active ? "، دوره توّا" : ""}`);
+    if (active) player.card.setAttribute("aria-current", "true");
+    else player.card.removeAttribute("aria-current");
   }
 }
 
+// pick the next player and question, or finish after ten turns
 function newQuestion() {
   if (gameOver) return;
   updateProgress(turnsPlayed);
-
   if (turnsPlayed >= TOTAL_TURNS || queue.length === 0) {
     finishGame();
     return;
   }
-
-  // P1, P2, P1, P2... each turn has a different question.
   setActivePlayer(turnsPlayed % 2 === 0 ? 1 : 2);
-  currentQuestion = queue.pop();
-
-  //record start time
-  questionStartTime = Date.now();
-
-  attemptsLeft = MAX_ATTEMPTS;
-  hintUsed = false;
-  questionEnded = false;
-
-  quiz.dataset.status = "ready";
-  quiz.dataset.hintState = "hidden";
-  quiz.dataset.type = currentQuestion.type;
-
-  optionButtons.forEach((button, index) => {
-    button.textContent = currentQuestion.options?.[index] || "";
-    button.disabled = false;
-    delete button.dataset.selected;
-    delete button.dataset.result;
-  });
-
-  questionText.textContent = currentQuestion.question;
-  hintText.textContent = currentQuestion.hint;
-  correctAnswerDisplay.textContent = acceptedAnswers[0];
-
-  answerInput.value = "";
-  answerInput.disabled = false;
-  answerInput.removeAttribute("aria-invalid");
-
-  checkButton.disabled = false;
-  skipButton.disabled = false;
-  nextButton.disabled = true;
-
-  hintToggle.disabled = true;
-  hintToggle.setAttribute("aria-expanded", "false");
-  hintContent.classList.remove("is-visible");
-
-  feedback.classList.remove("is-wrong", "is-correct", "is-exhausted");
-
-  updateAttempts();
-  if (currentQuestion.type === "qcm") {
-    optionButtons[0].focus();
-  } else {
-    answerInput.focus();
-  }
+  showQuestion(queue.pop());
 }
 
-function endCurrentQuestion(status) {
-  questionEnded = true;
-  updateProgress(turnsPlayed + 1);
-  quiz.dataset.status = status;
-
-  answerInput.disabled = true;
-  checkButton.disabled = true;
-  skipButton.disabled = true;
-  nextButton.disabled = false;
-  hintToggle.disabled = true;
-
-  optionButtons.forEach((button) => {
-    button.disabled = true;
-    if (button.textContent === currentQuestion.answer) {
-      button.dataset.result = "correct";
-    } else if (button.dataset.selected === "true") {
-      button.dataset.result = "wrong";
-    }
-  });
-
-  // Last turn: the Next button leads to the results.
-  nextButton.focus();
-}
-
-//calculate the temporelle penalty
-function calculateTimePenalty() {
-    const timeSpent = Math.floor(
-        (Date.now() - questionStartTime) / 1000
-    );
-
-    const intervals = Math.floor(
-        timeSpent / TIME_PENALTY_INTERVAL
-    );
-
-    return Math.min(
-        intervals * TIME_PENALTY_POINTS,
-        MAX_TIME_PENALTY
-    );
-}
-
-function checkAnswer() {
-  if (gameOver || !currentQuestion || questionEnded) return;
-
-  const userAnswer = normalizeAnswer(answerInput.value);
-  if (!userAnswer) {
-    answerInput.focus();
-    return;
-  }
-
-  const player = players[currentPlayer];
-
-  if (currentQuestion.answer.some((answer) => userAnswer === normalizeAnswer(answer))) {
-    const basePoints = hintUsed
-        ? POINTS_WITH_HINT
-        : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
-
-    const timePenalty = calculateTimePenalty();
-
-    const earnedPoints = Math.max(0, basePoints - timePenalty);
-
-    player.score += earnedPoints;
-
-    player.scoreEl.textContent = player.score;
-
-    answerInput.removeAttribute("aria-invalid");
-    feedback.classList.remove("is-wrong", "is-exhausted");
-    feedback.classList.add("is-correct");
-    endCurrentQuestion("correct");
-    return;
-  }
-
-  // A QCM has one choice; text riddles keep their three attempts.
-  attemptsLeft = currentQuestion.type === "qcm" ? 0 : attemptsLeft - 1;
-  answerInput.value = "";
-  updateAttempts();
-  answerInput.setAttribute("aria-invalid", "true");
-
-  feedback.classList.remove("is-correct", "is-exhausted");
-  feedback.classList.add("is-wrong");
-  quiz.dataset.status = "wrong";
-
-  if (attemptsLeft === 1) {
-    hintToggle.disabled = false;
-  }
-
-  if (attemptsLeft <= 0) {
-    feedback.classList.remove("is-wrong");
-    feedback.classList.add("is-exhausted");
-    endCurrentQuestion("exhausted");
-    return;
-  }
-
-  answerInput.focus();
-}
-
-function revealHint() {
-  if (currentQuestion.type === "qcm") return;
-  if (gameOver || questionEnded || attemptsLeft !== 1 || hintUsed) return;
-
-  hintUsed = true;
-  quiz.dataset.hintState = "revealed";
-  hintContent.classList.add("is-visible");
-  hintToggle.setAttribute("aria-expanded", "true");
-  hintToggle.disabled = true;
-}
-
+// count this turn and move on to the other player
 function advance() {
   if (gameOver) return;
   turnsPlayed++;
   newQuestion();
 }
 
+// skip this turn without adding any points
 function skipQuestion() {
   if (gameOver || questionEnded) return;
-  questionEnded = true; // guard against double clicks
+  questionEnded = true;
   advance();
 }
 
+// move on after an answer, counting the turn only once
 function nextQuestion() {
   if (gameOver || !questionEnded) return;
   questionEnded = false;
   advance();
 }
 
-//la seauvegarde
-function saveBestScores() {
-    let bestScores = JSON.parse(
-        localStorage.getItem("versusBestScores") || "[]"
-    );
-
-    // Save both players' results.
-    [1, 2].forEach((n) => {
-        bestScores.push({
-            name: players[n].name,
-            score: players[n].score,
-            date: new Date().toLocaleDateString()
-        });
-    });
-
-    // Sort from highest to lowest.
-    bestScores.sort((a, b) => b.score - a.score);
-
-    // Keep only the 5 best results.
-    bestScores = bestScores.slice(0, 5);
-
-    localStorage.setItem(
-        "versusBestScores",
-        JSON.stringify(bestScores)
-    );
-}
-
+// save both scores once and open the results page
 function finishGame() {
   if (gameOver) return;
   gameOver = true;
-
-      saveBestScores();
-
-  sessionStorage.setItem(
-    "versusResult",
-    JSON.stringify({
-      player1: { name: players[1].name, score: players[1].score },
-      player2: { name: players[2].name, score: players[2].score },
-    })
-  );
-
+  saveTopScores("versusBestScores", [1, 2].map((n) => ({
+    name: players[n].name,
+    score: players[n].score,
+    date: new Date().toLocaleDateString(),
+  })));
+  sessionStorage.setItem("versusResult", JSON.stringify({
+    player1: { name: players[1].name, score: players[1].score },
+    player2: { name: players[2].name, score: players[2].score },
+  }));
   window.location.href = "versus-results.html";
 }
 
-optionButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    if (button.disabled || gameOver) return;
-    button.dataset.selected = "true";
-    answerInput.value = button.textContent;
-    checkAnswer();
-  });
-});
-
-checkButton.addEventListener("click", checkAnswer);
-answerInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    checkAnswer();
-  }
-});
-nextButton.addEventListener("click", () => slideQuestion(nextQuestion));
-skipButton.addEventListener("click", () => slideQuestion(skipQuestion));
-restartButton.addEventListener("click", startGame);
-hintToggle.addEventListener("click", revealHint);
-
-if (readPlayers()) {
-  loadQuestions();
-}
+bindQuizControls();
+if (readPlayers()) loadQuestions(TOTAL_TURNS);

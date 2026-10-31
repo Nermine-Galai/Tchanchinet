@@ -1,10 +1,10 @@
-/* Page d’accueil */
+/* the home page */
 .art-button > img {
   width: 100%;
   height: auto;
 }
 
-/* Règles du jeu */
+/* the game rules */
 .rules-content {
   padding: 35px 105px;
   text-align: center;
@@ -25,7 +25,7 @@
   margin-top: 3px;
 }
 
-/* Choix du mode */
+/* buttons for picking a game mode */
 .home-actions {
   display: flex;
   align-items: center;
@@ -78,7 +78,7 @@
   color: #dcc48c;
 }
 
-/* Tablettes et telephones */
+/* adjust the layout for tablets and phones */
 
 @media (max-width: 1100px) {
   .home-main {
@@ -120,7 +120,7 @@
     font-size: 18px;
   }
 }
-/* Tablettes */
+/* a few changes for tablet screens */
 @media (min-width: 600px) and (max-width: 1100px) {
   .home-main {
     gap: 20px;

@@ -16,20 +16,27 @@ Mini web project, FIA3, ISSAT Sousse, academic year 2025/2026.
 | Questions | Random, until time or questions run out | 5 per player, alternating P1, P2, P1... |
 | Results | Final score | Both scores, winner or draw |
 
+The solo countdown pauses while **Next** is enabled and during question slides.
+It resumes when the next question is ready; the progress bar pauses with it.
+
 Rules shared by both modes:
 
 - Text riddles give **3 attempts**. Empty answers do not use an attempt.
 - QCM riddles show four buttons in a 2×2 grid, with **one choice** and no hints
-  or attempt icons. A correct choice earns **100 points**; a wrong choice shows
+  or attempt icons. A correct choice starts at **100 points**; a wrong choice shows
   the correct answer. Use **Next** to continue.
-- A correct answer earns **100 points** on the first attempt, **80** on the second,
+- A correct text answer starts at **100 points** on the first attempt, **80** on the second,
   or **50** on the third without a hint.
 - After 2 wrong answers the **hint** (khamsa) unlocks. Using it makes a correct
-  third answer worth **25 points**.
+  third answer start at **25 points**.
+- In both modes, a correct answer loses **5 points per full 10 seconds** spent
+  on that question, capped at **25 points**. The clock starts with each new
+  question and continues across retries. Points earned never go below zero.
 - After 3 wrong answers the correct answer is shown.
 - **Skip** moves on without points.
 - **Next** and **Skip** slide the question and answers left, then bring the next
   ones in from the right (300 ms total). Reduced-motion mode skips the animation.
+  The bonus code uses CSS keyframes and two `setTimeout` steps for this slide.
 - The bar above the question fills with elapsed time in solo mode and completed
   questions (including skipped ones) in VS mode. Restart resets it.
   It turns yellow with one-third remaining, then red with one-sixth remaining
@@ -65,6 +72,9 @@ Tchanchinet/
 │   └── versus-results.html    Two-player result
 ├── js/                        Quiz and result scripts
 │   ├── quiz.js
+│   ├── quiz-shared.js          Shared questions, answers, scoring and controls
+│   ├── quiz-transition.js      Slide animation for both modes
+│   ├── scores.js               Shared leaderboard saving and display
 │   ├── results.js
 │   ├── versus-quiz.js
 │   └── versus-results.js
@@ -103,8 +113,16 @@ Text riddles use the input bar; QCM riddles use four buttons styled like that ba
 Pages in `pages/` load styles from `../css/`, scripts from `../js/`, and images
 from `../assets/`; their home links point to `../index.html`. CSS image URLs
 resolve relative to the stylesheet in `css/`, so they also use `../assets/`.
-Both quiz scripts fetch `../assets/tunisian_riddles_40.json` relative to the
+The shared quiz script fetches `../assets/tunisian_riddles_40.json` relative to the
 quiz page. Links between game pages use the filename because they share `pages/`.
+
+**Shared code.** `js/quiz-shared.js` handles question loading, text and QCM
+answers, attempts, hints, scoring, penalties, progress colors and controls.
+`js/quiz.js` handles the solo countdown; `js/versus-quiz.js` handles player names
+and turns. `js/scores.js` saves and displays both leaderboards. Each function
+has a short comment explaining its purpose.
+The bonus sections use plain `for` loops, named click handlers and `if/else`
+blocks for the QCM choices, replay and progress colors.
 
 **Game state in `data-*` attributes.** The JavaScript does not change styles. It
 sets attributes on the `#quiz` element and the CSS reacts to them:
@@ -122,6 +140,10 @@ JavaScript. Scores are saved in `sessionStorage` at the end of a game and read b
 the results page. A results page opened without a finished game redirects to
 `index.html` for solo mode or `pages/versus.html` for two-player mode.
 
+**Best scores.** Each finished game saves its scores in `localStorage`:
+`soloBestScores` or `versusBestScores`. Each list keeps the five highest scores,
+with dates and VS player names. Restart keeps these leaderboards.
+
 **Results.** `js/versus-results.js` compares the scores and sets `data-winner` on
 `#versus-result` to `1`, `2` or `draw`; the CSS shows the matching message.
 
@@ -131,15 +153,19 @@ the results page. A results page opened without a finished game redirects to
   feedback (`role="status"`, `aria-live`), keyboard focus styles.
 - Active player and remaining attempts are exposed through `aria-current` and
   `aria-label`.
+- QCM choices support **Tab / Shift+Tab** and the **arrow keys** in the RTL 2×2
+  grid. **Enter / Space** submits the focused choice. An inset focus ring stays
+  visible on phone screens, and focus moves to **Next** after an answer.
 - Reduced-motion support, and layouts for phone and tablet (600 to 1100 px).
 
 ## Tuning the game
 
 Scoring and length are constants at the top of the scripts:
 
-- [js/quiz.js](js/quiz.js): `POINTS_BY_ATTEMPT`, `POINTS_WITH_HINT`, `MAX_ATTEMPTS`, `TOTAL_TIME`.
-- [js/versus-quiz.js](js/versus-quiz.js): `POINTS_BY_ATTEMPT`, `POINTS_WITH_HINT`, `MAX_ATTEMPTS`,
-  `QUESTIONS_PER_PLAYER`.
+- [js/quiz-shared.js](js/quiz-shared.js): `POINTS_BY_ATTEMPT`, `POINTS_WITH_HINT`,
+  `MAX_ATTEMPTS`, `TIME_PENALTY_INTERVAL`, `TIME_PENALTY_POINTS`, `MAX_TIME_PENALTY`.
+- [js/quiz.js](js/quiz.js): `TOTAL_TIME`.
+- [js/versus-quiz.js](js/versus-quiz.js): `QUESTIONS_PER_PLAYER`.
 
 ## Testing checklist
 

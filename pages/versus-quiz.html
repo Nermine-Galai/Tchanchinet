@@ -12,14 +12,10 @@
 </head>
 <body class="quiz-page duel-page">
   <a class="skip-link" href="#main">انتقل إلى المحتوى</a>
-  <!-- JavaScript reads player1 and player2 from the URL and alternates data-player="1" / "2".
-       Reset attempts and the hint whenever the next player receives a new question.
-       After two errors: data-attempts-left="1" opens the khamsa artwork.
-       JavaScript enables #hint-toggle. Clicking it sets data-hint-state="revealed".
-       Reset the hint state and disabled button for each new question. -->
+  <!-- player names come from the url. data-player switches between 1 and 2, and each question resets the attempts and hint. the khamsa opens after two wrong tries. -->
   <div id="quiz" class="game-screen" data-attempts-left="3" data-status="ready" data-hint-state="hidden" data-player="1">
     <header class="game-header">
-      <div class="lives" aria-label="ثلاث محاولات متبقّية">
+      <div class="lives" role="group" aria-label="ثلاث محاولات متبقّية">
         <div class="chechias" aria-hidden="true">
           <span class="attempt" data-attempt="1"><img class="chechia-red" src="../assets/red_chechia.c6699b2dd5.webp" alt="" width="1254" height="1254"><img class="chechia-gray" src="../assets/gray_chechia.f84f7a8a7c.webp" alt="" width="1254" height="1254"></span>
           <span class="attempt" data-attempt="2"><img class="chechia-red" src="../assets/red_chechia.c6699b2dd5.webp" alt="" width="1254" height="1254"><img class="chechia-gray" src="../assets/gray_chechia.f84f7a8a7c.webp" alt="" width="1254" height="1254"></span>
@@ -27,7 +23,7 @@
         </div>
       </div>
       <a class="brand" href="../index.html" aria-label="تشنشينات، الصفحة الرئيسية"><img src="../assets/tchanchinet_logo.c576f576c8.webp" alt="تشنشينات" width="1516" height="470"></a>
-      <div class="duel-scoreboard" aria-label="نقاط اللاعبين">
+      <div class="duel-scoreboard" role="group" aria-label="نقاط اللاعبين">
         <section id="player-one-card" class="player-card player-blue duel-player" aria-label="اللاعب الأول، دوره توّا" aria-current="true">
           <span class="player-dot" aria-hidden="true"></span>
           <bdi id="player-one-display" class="player-name">اللاعب الأول</bdi>
@@ -44,7 +40,10 @@
     </header>
 
     <main id="main" class="quiz-main">
-      <progress id="quiz-progress" class="quiz-progress" max="10" value="0" aria-label="التشنشينات المكتملة"></progress>
+      <div class="quiz-progress">
+        <progress id="quiz-progress" class="visually-hidden" max="10" value="0" aria-label="التشنشينات المكتملة"></progress>
+        <span id="progress-fill" class="progress-fill" aria-hidden="true"></span>
+      </div>
       <section class="ornament-panel question-panel" aria-labelledby="question-text">
         <img fetchpriority="high" class="panel-art" src="../assets/questions_riddles_box.9d4d819e8c.webp" alt="" width="2172" height="724">
         <div class="panel-content question-content">
@@ -82,6 +81,8 @@
     </button>
   </div>
 <script src="../js/quiz-transition.js" defer></script>
+<script src="../js/scores.js" defer></script>
+<script src="../js/quiz-shared.js" defer></script>
 <script src="../js/versus-quiz.js" defer></script>
 </body>
 </html>

@@ -1,6 +1,41 @@
-/* Quiz : solo et deux joueurs */
+/* quiz styles used by both modes */
 .quiz-main {
   overflow-x: clip;
+}
+
+/* the question and answers slide together; the navigation stays still */
+#quiz[data-transition="out"] .question-panel,
+#quiz[data-transition="out"] .answer-form,
+#quiz[data-transition="out"] .qcm-options {
+  animation: question-out 150ms ease-in-out both;
+}
+
+#quiz[data-transition="in"] .question-panel,
+#quiz[data-transition="in"] .answer-form,
+#quiz[data-transition="in"] .qcm-options {
+  animation: question-in 150ms ease-in-out both;
+}
+
+@keyframes question-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-80px);
+    opacity: 0;
+  }
+}
+
+@keyframes question-in {
+  from {
+    transform: translateX(80px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .hint-toggle img {
@@ -55,7 +90,6 @@
   z-index: -1;
   width: 166px;
   height: auto;
-  pointer-events: none;
   filter: drop-shadow(0 5px 3px rgb(36 52 66 / 23%));
 }
 
@@ -65,7 +99,6 @@
   border: 0;
   border-radius: 45%;
   background: transparent;
-  pointer-events: auto;
   transition: transform 180ms ease, filter 180ms ease;
 }
 
@@ -116,9 +149,7 @@
 }
 
 .quiz-progress {
-  --progress-fill: linear-gradient(270deg, #155777, #7e9bb0);
-  display: block;
-  appearance: none;
+  display: flex;
   width: 90%;
   max-width: 950px;
   height: 12px;
@@ -126,31 +157,25 @@
   border: 1px solid #c4d5df;
   border-radius: 999px;
   background: #dceaf4;
+  box-shadow: inset 0 1px 3px rgb(22 56 86 / 18%);
   overflow: hidden;
 }
 
-.quiz-progress[data-level="warning"] {
-  --progress-fill: linear-gradient(270deg, #c48b16, #f3d875);
-}
-
-.quiz-progress[data-level="danger"] {
-  --progress-fill: linear-gradient(270deg, #aa3232, #e48b80);
-}
-
-.quiz-progress::-webkit-progress-bar {
-  background: #dceaf4;
-  border-radius: 999px;
-  box-shadow: inset 0 1px 3px rgb(22 56 86 / 18%);
-}
-
-.quiz-progress::-webkit-progress-value {
-  background: var(--progress-fill);
+/* draw the fill with regular css, keeping the native progress for screen readers */
+.progress-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(270deg, #155777, #7e9bb0);
   border-radius: 999px;
 }
 
-.quiz-progress::-moz-progress-bar {
-  background: var(--progress-fill);
-  border-radius: 999px;
+.quiz-progress progress[data-level="warning"] + .progress-fill {
+  background: linear-gradient(270deg, #c48b16, #f3d875);
+}
+
+.quiz-progress progress[data-level="danger"] + .progress-fill {
+  background: linear-gradient(270deg, #aa3232, #e48b80);
 }
 
 .question-panel {
@@ -257,6 +282,13 @@
 .qcm-option:not(:disabled):hover {
   border-color: #183666;
   filter: brightness(1.1);
+}
+
+/* keep the keyboard focus ring inside the button so it cannot get clipped */
+.qcm-option:focus-visible {
+  outline: 3px solid white;
+  outline-offset: -7px;
+  box-shadow: inset 0 0 0 4px #153962;
 }
 
 .qcm-option[data-result="correct"] {
@@ -506,7 +538,7 @@
   }
 }
 
-/* Grands ecrans */
+/* layout for larger screens */
 @media (min-width: 1101px) {
   .quiz-page .game-screen {
     padding-bottom: 0;
@@ -633,7 +665,7 @@
   }
 }
 
-/* Tablettes et telephones */
+/* adjust the layout for tablets and phones */
 @media (max-width: 1100px) {
   .question-panel > .panel-art {
     display: none;
@@ -805,7 +837,7 @@
   }
 }
 
-/* Tablettes */
+/* a few changes for tablet screens */
 @media (min-width: 600px) and (max-width: 1100px) {
   .quiz-main {
     grid-template-rows: 12px minmax(140px, 1fr) 68px 130px 80px;

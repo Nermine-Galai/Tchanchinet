@@ -1,4 +1,4 @@
-/* Resultats des deux joueurs */
+/* results for both players */
 .duel-result-content {
   padding: 22px 110px;
   text-align: center;
@@ -62,7 +62,7 @@
 }
 
 
-/* Versus Leaderboard */
+/* the best scores from versus mode */
 .versus-leaderboard {
   margin-top: 20px;
   padding: 22px;

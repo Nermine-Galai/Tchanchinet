@@ -1,4 +1,4 @@
-/* Styles communs a toutes les pages */
+/* styles shared by all the pages */
 .player-blue {
   --player-color: #3e79aa;
   --player-text: #244b7a;
@@ -31,7 +31,6 @@
 :root {
   --navy: #183666;
   --ink: #343b49;
-  --font: "Segoe UI", Tahoma, Arial, sans-serif;
 }
 
 * {
@@ -48,7 +47,7 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  font-family: var(--font);
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   background: #aec9dc url("../assets/bg.4afab73f46.webp") center center / cover fixed no-repeat;
@@ -240,7 +239,7 @@ button:disabled {
   transform: translateY(0);
 }
 
-/* Tablettes et telephones */
+/* adjust the layout for tablets and phones */
 @media (max-width: 1100px) {
   .rules-panel > .panel-art {
     display: none;
@@ -294,7 +293,7 @@ button:disabled {
   }
 }
 
-/* Tablettes : textes et commandes plus grands */
+/* make the text and buttons a bit bigger on tablets */
 @media (min-width: 600px) and (max-width: 1100px) {
   .game-screen {
     padding: 20px 28px;

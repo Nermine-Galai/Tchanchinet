@@ -1,4 +1,4 @@
-/* Joueur actif : bleu pour le premier, dore pour le second */
+/* highlight the current player in blue or gold */
 .duel-page #quiz {
   --turn-color: #3e79aa;
   --turn-text: #244b7a;

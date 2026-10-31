@@ -11,7 +11,7 @@
 </head>
 <body class="versus-results-page">
   <a class="skip-link" href="#main">انتقل إلى المحتوى</a>
-  <!-- data-winner: pending (placeholder), 1, 2 or draw. JavaScript fills the names and scores. -->
+  <!-- data-winner starts as pending, then becomes 1, 2 or draw. the script fills in the names and scores. -->
   <div id="versus-result" class="game-screen" data-winner="pending">
     <header class="game-header">
       <a class="brand" href="../index.html" aria-label="تشنشينات، الصفحة الرئيسية"><img src="../assets/tchanchinet_logo.c576f576c8.webp" alt="تشنشينات" width="1516" height="470"></a>
@@ -63,6 +63,7 @@
       </nav>
     </main>
   </div>
+<script src="../js/scores.js" defer></script>
 <script src="../js/versus-results.js" defer></script>
 </body>
 </html>

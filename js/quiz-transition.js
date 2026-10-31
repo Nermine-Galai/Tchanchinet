@@ -1,36 +1,48 @@
 let questionSliding = false;
 
-async function slideQuestion(changeQuestion) {
-  if (questionSliding) return;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+// unlock the buttons and focus the answer once the slide is done
+function finishQuestionSlide() {
+  const main = document.getElementById("main");
+  const quizBox = document.getElementById("quiz");
+  quizBox.removeAttribute("data-transition");
+  main.inert = false;
+  questionSliding = false;
+
+  if (quizBox.dataset.type === "qcm") {
+    document.querySelector(".qcm-option").focus();
+  } else {
+    document.getElementById("answer").focus();
+  }
+}
+
+// slide the old question left, then bring the next one in from the right
+function slideQuestion(changeQuestion) {
+  if (questionSliding) {
+    return;
+  }
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reducedMotion) {
     changeQuestion();
     return;
   }
 
   const main = document.getElementById("main");
-  const parts = document.querySelectorAll(".question-panel, .answer-form, .qcm-options");
-  const slide = (frames) => Promise.all(Array.from(parts, (part) =>
-    part.animate(frames, { duration: 150, easing: "ease-in-out" }).finished
-  ));
-
+  const quizBox = document.getElementById("quiz");
   questionSliding = true;
   main.inert = true;
-  try {
-    await slide([
-      { transform: "translateX(0)", opacity: 1 },
-      { transform: "translateX(-80px)", opacity: 0 }
-    ]);
-    changeQuestion();
-    await slide([
-      { transform: "translateX(80px)", opacity: 0 },
-      { transform: "translateX(0)", opacity: 1 }
-    ]);
-  } finally {
-    main.inert = false;
-    questionSliding = false;
-  }
+  quizBox.dataset.transition = "out";
 
-  const selector = document.getElementById("quiz").dataset.type === "qcm"
-    ? ".qcm-option" : "#answer";
-  main.querySelector(selector).focus();
+  // let the old question leave before changing what is on screen
+  setTimeout(function () {
+    try {
+      changeQuestion();
+    } catch (error) {
+      finishQuestionSlide();
+      throw error;
+    }
+
+    quizBox.dataset.transition = "in";
+    setTimeout(finishQuestionSlide, 150);
+  }, 150);
 }

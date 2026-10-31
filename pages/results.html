@@ -19,17 +19,17 @@
         <div class="panel-content result-content">
           <h1 id="result-title">يعطيك الصحة!</h1>
           <p id="result-message">مجموع نقاطك</p>
-          <div class="final-score" aria-label="النقاط تظهر بعد نهاية اللعب"><span id="final-score">—</span></div>
+          <div class="final-score" role="group" aria-label="النقاط تظهر بعد نهاية اللعب"><span id="final-score">—</span></div>
           <p class="score-caption">نقطة</p>
         </div>
       </section>
 
-      <!-- Adding a new section for the leaderboard to display the top 5 scores. -->
+      <!-- the five best scores go below the current result -->
       <section class="ornament-panel leaderboard-panel" aria-labelledby="leaderboard-title">
         <div class="leaderboard-content">
           <h2 id="leaderboard-title">🏆 أفضل 5 نتائج</h2>
           <ol id="best-scores-list" class="best-scores-list">
-            <!-- Scores will be inserted by JavaScript -->
+            <!-- the script fills in this list -->
           </ol>
         </div>
       </section>
@@ -39,6 +39,7 @@
       </nav>
     </main>
   </div>
+<script src="../js/scores.js" defer></script>
 <script src="../js/results.js" defer></script>
 </body>
 </html>
