@@ -5,7 +5,23 @@ JavaScript. The interface is in Arabic (right-to-left). Players answer riddles
 from a bank of 70 in two modes: **solo** against the clock, or **two players** on
 the same device.
 
-Mini web project, FIA3, ISSAT Sousse, academic year 2025/2026.
+Mini web project, FIA3, ISSAT Sousse, academic year 2026/2027.
+By Nermine Galai and Sarra Gharbi. The full report is in [rapport.pdf](rapport.pdf).
+
+The JavaScript part follows **sujet 7, "Page de quiz interactif"**:
+
+| Requirement | Where it is done |
+| --- | --- |
+| Countdown timer per question | Solo 3-minute countdown in `js/quiz.js`, plus a hidden clock per question in `js/quiz-shared.js` |
+| Dynamic score with time penalties | `calculateTimePenalty` and `checkAnswer` in `js/quiz-shared.js` |
+| Immediate feedback after each answer | `data-status` on `#quiz`, styled in `css/quiz-shared.css` |
+| Best scores saved in `localStorage` | `js/scores.js` |
+| Bonus: replay with full reset | `startGame` in `js/quiz.js` and `js/versus-quiz.js` |
+| Bonus: different question types | Text and QCM riddles in the JSON file |
+| Bonus: visual progress bar | `updateProgress` in `js/quiz-shared.js` |
+| Bonus: transition between questions | `js/quiz-transition.js` |
+
+Plain ("vanilla") JavaScript only, no libraries.
 
 ## Game modes and rules
 
@@ -90,7 +106,7 @@ Tchanchinet/
 ├── assets/                   Artwork and riddle data
 │   ├── *.png, *.jpg, *.webp    Original artwork and optimised WebP images
 │   └── tunisian_riddles_40.json   The 70 riddles (original filename retained)
-└── tchanchinet/               Reference images
+└── rapport.pdf                Project report (French)
 ```
 
 Page flow:
@@ -123,6 +139,16 @@ and turns. `js/scores.js` saves and displays both leaderboards. Each function
 has a short comment explaining its purpose.
 The bonus sections use plain `for` loops, named click handlers and `if/else`
 blocks for the QCM choices, replay and progress colors.
+
+**Hidden clock per question.** Besides the visible solo countdown, every
+question has its own clock that is never displayed. `showQuestion` stores
+`questionStartTime = Date.now()` each time a question appears, so every riddle
+starts again from zero. No `setInterval` is needed: when the answer is correct,
+`calculateTimePenalty` takes the seconds elapsed since `questionStartTime`,
+removes 5 points per full 10 seconds and caps the penalty at 25. `checkAnswer`
+then adds `Math.max(0, basePoints - penalty)`. For example, a correct second
+attempt after 23 seconds gives 80 − 10 = 70 points. The clock lives in the
+shared script, so it also applies in VS mode, where no countdown is shown.
 
 **Game state in `data-*` attributes.** The JavaScript does not change styles. It
 sets attributes on the `#quiz` element and the CSS reacts to them:
@@ -158,6 +184,18 @@ with dates and VS player names. Restart keeps these leaderboards.
   visible on phone screens, and focus moves to **Next** after an answer.
 - Reduced-motion support, and layouts for phone and tablet (600 to 1100 px).
 
+## Lighthouse scores
+
+Measured with Lighthouse while the site ran on Live Server:
+
+| Page | Performance | Accessibility | Best Practices | SEO |
+| --- | --- | --- | --- | --- |
+| `index.html` | 94 | 100 | 100 | 100 |
+| `pages/quiz.html?mode=solo` | 95 | 100 | 100 | 100 |
+| `pages/results.html` | 96 | 100 | 100 | 100 |
+| `pages/versus.html` | 97 | 100 | 100 | 100 |
+| `pages/versus-quiz.html` | 95 | 100 | 100 | 100 |
+
 ## Tuning the game
 
 Scoring and length are constants at the top of the scripts:
@@ -175,6 +213,12 @@ Scoring and length are constants at the top of the scripts:
 - Hint unlocks only after two failures and resets on each question.
 - Click and Enter both work; repeated clicks cannot award points twice.
 - Solo ends when time runs out; VS alternates turns with no timer.
+- A slow correct answer loses 5 points per 10 seconds (25 at most), and the
+  penalty starts again from zero on the next question.
+- QCM: one choice, correct option in green and wrong choice in red.
+- The progress bar turns yellow, then red; the slide is skipped with reduced motion.
+- Restart resets the score, timer, bar and questions but keeps the best scores.
+- Best scores survive a browser restart and keep only the top five per mode.
 - Winner and draw screens; refreshing or opening results directly.
 - Keyboard-only use, long Arabic text, phone layout.
 
