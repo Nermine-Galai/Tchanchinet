@@ -19,10 +19,15 @@ const hintToggle = document.getElementById("hint-toggle");
 const hintText = document.getElementById("hint-text");
 const hintContent = document.getElementById("hint-content");
 
-const TOTAL_TIME = 3 * 60;
-const POINTS_BY_ATTEMPT = [100, 80, 50];
+const TOTAL_TIME = 1 * 60;
+const POINTS_BY_ATTEMPT = [100, 70, 40];
 const POINTS_WITH_HINT = 25;
 const MAX_ATTEMPTS = 3;
+
+//time penalty constants
+const TIME_PENALTY_INTERVAL = 10;
+const TIME_PENALTY_POINTS = 5;
+const MAX_TIME_PENALTY = 25;
 
 let questions = [];
 let currentQuestion = null;
@@ -34,6 +39,9 @@ let hintUsed = false;
 let gameOver = false;
 let timer = TOTAL_TIME;
 let timerInterval = null;
+
+// Track the start time of the current question to apply time penalties.
+let questionStartTime = 0;
 
 // Only clean up spacing; accepted spellings belong in the JSON answer list.
 function normalizeAnswer(value) {
@@ -136,6 +144,7 @@ function formatTime(seconds) {
 
 // Display a new question.
 function nextQuestion() {
+
   if (gameOver) return;
 
   if (remainingQuestions.length === 0) {
@@ -144,9 +153,9 @@ function nextQuestion() {
   }
 
   currentQuestion = remainingQuestions.pop();
-  acceptedAnswers = Array.isArray(currentQuestion.answer)
-    ? currentQuestion.answer
-    : [currentQuestion.answer];
+
+    //start tracking time for the current question to apply time penalties
+  questionStartTime = Date.now();
 
   attemptsLeft = MAX_ATTEMPTS;
   hintUsed = false;
@@ -218,6 +227,23 @@ function updateAttempts() {
   }
 }
 
+// Calculate the time penalty based on how long the user took to answer the question.
+function calculateTimePenalty() {
+    const timeSpent = Math.floor(
+        (Date.now() - questionStartTime) / 1000
+    );
+
+    const penaltyIntervals = Math.floor(
+        timeSpent / TIME_PENALTY_INTERVAL
+    );
+
+    return Math.min(
+        penaltyIntervals * TIME_PENALTY_POINTS,
+        MAX_TIME_PENALTY
+    );
+}
+
+
 // Check the user's answer.
 function checkAnswer() {
   if (gameOver || !currentQuestion) return;
@@ -230,10 +256,17 @@ function checkAnswer() {
     return;
   }
 
-  if (acceptedAnswers.some((answer) => userAnswer === normalizeAnswer(answer))) {
-    score += hintUsed
-      ? POINTS_WITH_HINT
-      : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
+  if (currentQuestion.answer.some((answer) => userAnswer === normalizeAnswer(answer))) {
+    const basePoints = hintUsed
+        ? POINTS_WITH_HINT
+        : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
+
+    const timePenalty = calculateTimePenalty();
+
+    const earnedPoints = Math.max(0, basePoints - timePenalty);
+
+    score += earnedPoints;
+
     scoreDisplay.textContent = score;
 
     quiz.dataset.status = "correct";
@@ -319,6 +352,31 @@ function skipQuestion() {
   nextQuestion();
 }
 
+
+// Save the top 5 scores in localStorage.
+function saveBestScore() {
+    let bestScores = JSON.parse(
+        localStorage.getItem("soloBestScores") || "[]"
+    );
+
+    bestScores.push({
+        score: score,
+        date: new Date().toLocaleDateString()
+    });
+
+    // Sort scores from highest to lowest.
+    bestScores.sort((a, b) => b.score - a.score);
+
+    // Keep only the 5 best scores.
+    bestScores = bestScores.slice(0, 5);
+
+    localStorage.setItem(
+        "soloBestScores",
+        JSON.stringify(bestScores)
+    );
+}
+
+
 // Finish the game and save the score.
 function finishGame(reason) {
   if (gameOver) return;
@@ -326,6 +384,9 @@ function finishGame(reason) {
   gameOver = true;
 
   clearInterval(timerInterval);
+
+  // Save the score and other relevant data in sessionStorage for the results page.
+  saveBestScore();
 
   sessionStorage.setItem("soloScore", String(score));
   sessionStorage.setItem("soloTotalQuestions", String(questions.length));

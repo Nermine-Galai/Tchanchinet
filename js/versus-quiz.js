@@ -16,10 +16,16 @@ const hintContent = document.getElementById("hint-content");
 const POINTS_BY_ATTEMPT = [100, 80, 50];
 const POINTS_WITH_HINT = 25;
 const MAX_ATTEMPTS = 3;
-const QUESTIONS_PER_PLAYER = 5;
+const QUESTIONS_PER_PLAYER = 3;
 const TOTAL_TURNS = QUESTIONS_PER_PLAYER * 2;
 
 const MAX_NAME_LENGTH = 24;
+
+// Time penalty constants
+const TIME_PENALTY_INTERVAL = 10;
+const TIME_PENALTY_POINTS = 5;
+const MAX_TIME_PENALTY = 25;
+
 
 const players = {
   1: {
@@ -50,6 +56,10 @@ let attemptsLeft = MAX_ATTEMPTS;
 let hintUsed = false;
 let questionEnded = false;
 let gameOver = false;
+
+
+//temps de debut de reponse
+let questionStartTime = 0;
 
 // Only clean up spacing; accepted spellings belong in the JSON answer list.
 function normalizeAnswer(value) {
@@ -175,9 +185,9 @@ function newQuestion() {
   // P1, P2, P1, P2... each turn has a different question.
   setActivePlayer(turnsPlayed % 2 === 0 ? 1 : 2);
   currentQuestion = queue.pop();
-  acceptedAnswers = Array.isArray(currentQuestion.answer)
-    ? currentQuestion.answer
-    : [currentQuestion.answer];
+
+  //record start time
+  questionStartTime = Date.now();
 
   attemptsLeft = MAX_ATTEMPTS;
   hintUsed = false;
@@ -244,6 +254,22 @@ function endCurrentQuestion(status) {
   nextButton.focus();
 }
 
+//calculate the temporelle penalty
+function calculateTimePenalty() {
+    const timeSpent = Math.floor(
+        (Date.now() - questionStartTime) / 1000
+    );
+
+    const intervals = Math.floor(
+        timeSpent / TIME_PENALTY_INTERVAL
+    );
+
+    return Math.min(
+        intervals * TIME_PENALTY_POINTS,
+        MAX_TIME_PENALTY
+    );
+}
+
 function checkAnswer() {
   if (gameOver || !currentQuestion || questionEnded) return;
 
@@ -255,10 +281,17 @@ function checkAnswer() {
 
   const player = players[currentPlayer];
 
-  if (acceptedAnswers.some((answer) => userAnswer === normalizeAnswer(answer))) {
-    player.score += hintUsed
-      ? POINTS_WITH_HINT
-      : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
+  if (currentQuestion.answer.some((answer) => userAnswer === normalizeAnswer(answer))) {
+    const basePoints = hintUsed
+        ? POINTS_WITH_HINT
+        : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
+
+    const timePenalty = calculateTimePenalty();
+
+    const earnedPoints = Math.max(0, basePoints - timePenalty);
+
+    player.score += earnedPoints;
+
     player.scoreEl.textContent = player.score;
 
     answerInput.removeAttribute("aria-invalid");
@@ -321,9 +354,38 @@ function nextQuestion() {
   advance();
 }
 
+//la seauvegarde
+function saveBestScores() {
+    let bestScores = JSON.parse(
+        localStorage.getItem("versusBestScores") || "[]"
+    );
+
+    // Save both players' results.
+    [1, 2].forEach((n) => {
+        bestScores.push({
+            name: players[n].name,
+            score: players[n].score,
+            date: new Date().toLocaleDateString()
+        });
+    });
+
+    // Sort from highest to lowest.
+    bestScores.sort((a, b) => b.score - a.score);
+
+    // Keep only the 5 best results.
+    bestScores = bestScores.slice(0, 5);
+
+    localStorage.setItem(
+        "versusBestScores",
+        JSON.stringify(bestScores)
+    );
+}
+
 function finishGame() {
   if (gameOver) return;
   gameOver = true;
+
+      saveBestScores();
 
   sessionStorage.setItem(
     "versusResult",
