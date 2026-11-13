@@ -12,8 +12,8 @@ The JavaScript part follows **sujet 7, "Page de quiz interactif"**:
 
 | Requirement | Where it is done |
 | --- | --- |
-| Countdown timer per question | Solo 3-minute countdown in `js/quiz.js`, plus a hidden clock per question in `js/quiz-shared.js` |
-| Dynamic score with time penalties | `calculateTimePenalty` and `checkAnswer` in `js/quiz-shared.js` |
+| Countdown timer per question | Solo 3-minute countdown in `js/quiz.js`, plus a hidden clock per question kept by PHP in the session |
+| Dynamic score with time penalties | `php/verifier_reponse.php` calculates the points and the penalty; `checkAnswer` in `js/quiz-shared.js` displays them |
 | Immediate feedback after each answer | `data-status` on `#quiz`, styled in `css/quiz-shared.css` |
 | Best scores saved in `localStorage` | `js/scores.js` |
 | Bonus: replay with full reset | `startGame` in `js/quiz.js` and `js/versus-quiz.js` |
@@ -22,6 +22,15 @@ The JavaScript part follows **sujet 7, "Page de quiz interactif"**:
 | Bonus: transition between questions | `js/quiz-transition.js` |
 
 Plain ("vanilla") JavaScript only, no libraries.
+
+The PHP part of sujet 7 is split by database table. The **questions** table is
+done here; the **scores** table is the other half of the work.
+
+| PHP requirement | Where it is done |
+| --- | --- |
+| Questions and answers stored in the database | `php/installer_questions.php` creates and fills the `questions` table; phpMyAdmin is used to add, modify or delete a question |
+| Answers checked and scored on the server | `php/verifier_reponse.php`, with `php/commencer_question.php` and `php/ouvrir_indice.php` |
+| JavaScript ↔ PHP communication | `fetch` in `js/quiz-shared.js` calls the four PHP files below |
 
 ## Game modes and rules
 
@@ -59,21 +68,27 @@ Rules shared by both modes:
   (60 / 30 seconds in solo; 3 / 1 questions in VS).
 - **Restart** (عاود من الأول) resets scores, attempts, hints and questions; solo
   also resets the timer, and VS starts again with player 1 and the same names.
-- Text riddles list accepted spellings in an `answer` array; QCM riddles use a
-  single `answer` string matching one of their `options`.
+- Text riddles list accepted spellings in the `answer` column; QCM riddles use a
+  single answer matching one of their `options`.
   Comparison ignores leading, trailing and repeated whitespace.
 
 ## Run the project
 
-No install or build step. The riddles are loaded with `fetch`, so the project must
-be served over HTTP (opening the files with `file://` will fail to load them).
+The riddles are now read from MySQL by PHP, so Live Server is not enough: the
+project needs a PHP server and MySQL (XAMPP for example).
 
-1. Open the folder in VS Code.
-2. Install the **Live Server** extension.
-3. Right-click `index.html` and choose **Open with Live Server**.
+1. Start **MySQL** from the XAMPP control panel.
+2. In phpMyAdmin, create an empty database named `tchanchinet`.
+3. Open a terminal in the project folder and start PHP:
+   `C:\xampp\php\php.exe -S localhost:8000`
+   (or copy the folder into `C:\xampp\htdocs` and start Apache).
+4. Open `http://localhost:8000/php/installer_questions.php` **once**: it creates
+   the `questions` table and fills it with the 70 riddles.
+5. Play at `http://localhost:8000/index.html`.
+6. To add, modify or delete a question, open the `questions` table in phpMyAdmin.
 
-Serve the project root so that `index.html`, `pages/`, `css/`, `js/` and `assets/`
-are available together.
+The database name, user and password are in `php/connexion.php` (`root` with an
+empty password, the XAMPP default).
 
 ## Project structure
 
@@ -103,9 +118,16 @@ Tchanchinet/
 │   ├── versus.css             Player name form
 │   ├── versus-quiz.css        Two-player quiz
 │   └── versus-results.css     Two-player result
+├── php/                       Server side (questions table)
+│   ├── connexion.php           PDO connection to the `tchanchinet` database
+│   ├── installer_questions.php Creates and fills the `questions` table (run once)
+│   ├── get_questions.php       Sends the questions to JavaScript as JSON, without answers
+│   ├── commencer_question.php  Notes in the session which question starts and when
+│   ├── ouvrir_indice.php       Notes in the session that the hint was opened
+│   └── verifier_reponse.php    Checks one answer, calculates the points, sends back the correction
 ├── assets/                   Artwork and riddle data
 │   ├── *.png, *.jpg, *.webp    Original artwork and optimised WebP images
-│   └── tunisian_riddles_40.json   The 70 riddles (original filename retained)
+│   └── tunisian_riddles_40.json   The 70 riddles of the JavaScript version (now copied into the database)
 └── rapport.pdf                Project report (French)
 ```
 
@@ -118,18 +140,41 @@ index.html → pages/versus.html → pages/versus-quiz.html → pages/versus-res
 
 ## How it works
 
-**Riddles.** [assets/tunisian_riddles_40.json](assets/tunisian_riddles_40.json)
-contains 40 riddles with `type: "text"` and 30 with `type: "qcm"`. Each has
-`question` and `hint` strings. Text riddles use an `answer` array of accepted
-spellings; QCM riddles have four `options` and one `answer` string. After three
-wrong attempts, the first text answer or the full QCM answer is displayed.
+**Riddles.** The `questions` table contains 40 riddles with `type` `text` and 30
+with `type` `qcm`. Its columns are `id`, `type`, `question`, `hint`, `answer`
+and `options`. For a text riddle, `answer` holds the accepted spellings separated
+by `|` and `options` is empty; for a QCM, `options` holds the four choices
+separated by `|` and `answer` is one of them. PHP cuts these cells with
+`explode`. After three wrong attempts, the first text answer or the QCM answer
+is displayed.
+
+**Loading the questions (JS → PHP).** `loadQuestions` calls
+`php/get_questions.php`, which reads the table with PDO and answers with
+`json_encode`. The answers are not sent, so they cannot be read in the browser.
+
+**Checking and scoring on the server (JS → PHP → JS).** The scoring is done by
+PHP only, with a session (`$_SESSION`):
+
+- When a question appears, `showQuestion` calls `php/commencer_question.php`,
+  which stores the question id, the start time (`time()`), zero attempts and no
+  hint in the session.
+- When the player opens the hint, `revealHint` calls `php/ouvrir_indice.php`,
+  which stores it in the session (only after two wrong answers).
+- `checkAnswer` sends only the question `id` and the typed answer (`reponse`) to
+  `php/verifier_reponse.php`. PHP counts the attempt, compares the answer with
+  the accepted spellings, and sends back `correct`, the final `points` and
+  `bonne_reponse`, which is filled only when the question is finished.
+
+JavaScript only adds the points it receives to the score on screen. The browser
+never sends the attempt number, the hint or the time, so they cannot be changed
+from the browser.
 Text riddles use the input bar; QCM riddles use four buttons styled like that bar.
 
 **Relative paths.** `index.html` links to `pages/` and loads styles from `css/`.
 Pages in `pages/` load styles from `../css/`, scripts from `../js/`, and images
 from `../assets/`; their home links point to `../index.html`. CSS image URLs
 resolve relative to the stylesheet in `css/`, so they also use `../assets/`.
-The shared quiz script fetches `../assets/tunisian_riddles_40.json` relative to the
+The shared quiz script fetches `../php/get_questions.php` relative to the
 quiz page. Links between game pages use the filename because they share `pages/`.
 
 **Shared code.** `js/quiz-shared.js` handles question loading, text and QCM
@@ -141,14 +186,14 @@ The bonus sections use plain `for` loops, named click handlers and `if/else`
 blocks for the QCM choices, replay and progress colors.
 
 **Hidden clock per question.** Besides the visible solo countdown, every
-question has its own clock that is never displayed. `showQuestion` stores
-`questionStartTime = Date.now()` each time a question appears, so every riddle
-starts again from zero. No `setInterval` is needed: when the answer is correct,
-`calculateTimePenalty` takes the seconds elapsed since `questionStartTime`,
-removes 5 points per full 10 seconds and caps the penalty at 25. `checkAnswer`
-then adds `Math.max(0, basePoints - penalty)`. For example, a correct second
-attempt after 23 seconds gives 80 − 10 = 70 points. The clock lives in the
-shared script, so it also applies in VS mode, where no countdown is shown.
+question has its own clock that is never displayed, and it lives on the server.
+`php/commencer_question.php` stores `$_SESSION['debut'] = time()` each time a
+question appears, so every riddle starts again from zero. When the answer is
+correct, `php/verifier_reponse.php` takes the seconds elapsed since
+`$_SESSION['debut']`, removes 5 points per full 10 seconds and caps the penalty
+at 25; the points never go below zero. For example, a correct second
+attempt after 23 seconds gives 80 − 10 = 70 points. Both quiz modes call the
+same PHP files, so it also applies in VS mode, where no countdown is shown.
 
 **Game state in `data-*` attributes.** The JavaScript does not change styles. It
 sets attributes on the `#quiz` element and the CSS reacts to them:
@@ -200,8 +245,10 @@ Measured with Lighthouse while the site ran on Live Server:
 
 Scoring and length are constants at the top of the scripts:
 
-- [js/quiz-shared.js](js/quiz-shared.js): `POINTS_BY_ATTEMPT`, `POINTS_WITH_HINT`,
-  `MAX_ATTEMPTS`, `TIME_PENALTY_INTERVAL`, `TIME_PENALTY_POINTS`, `MAX_TIME_PENALTY`.
+- [php/verifier_reponse.php](php/verifier_reponse.php): `$points_par_essai`, the
+  25 points given with the hint, and the time penalty (5 points per 10 seconds,
+  25 at most).
+- [js/quiz-shared.js](js/quiz-shared.js): `MAX_ATTEMPTS` (for the chechias on screen).
 - [js/quiz.js](js/quiz.js): `TOTAL_TIME`.
 - [js/versus-quiz.js](js/versus-quiz.js): `QUESTIONS_PER_PLAYER`.
 

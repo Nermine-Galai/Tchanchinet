@@ -15,31 +15,27 @@ const correctAnswerDisplay = document.getElementById("correct-answer");
 const hintToggle = document.getElementById("hint-toggle");
 const hintText = document.getElementById("hint-text");
 
-const POINTS_BY_ATTEMPT = [100, 80, 50];
-const POINTS_WITH_HINT = 25;
+// the points and the time penalty are calculated by php/verifier_reponse.php
 const MAX_ATTEMPTS = 3;
-const TIME_PENALTY_INTERVAL = 10;
-const TIME_PENALTY_POINTS = 5;
-const MAX_TIME_PENALTY = 25;
 
 let questions = [];
 let currentQuestion = null;
-let acceptedAnswers = [];
+let correctAnswer = "";
+let waitingServer = false;
 let attemptsLeft = MAX_ATTEMPTS;
 let hintUsed = false;
 let questionEnded = false;
 let gameOver = false;
-let questionStartTime = 0;
 
-// ignore extra spaces; the allowed spellings stay in the json file
+// ignore extra spaces; the allowed spellings stay in the database
 function normalizeAnswer(value) {
   return value.trim().replace(/\s+/g, " ");
 }
 
-// load the riddles and check there are enough before starting
+// ask php for the riddles (without the answers) and check there are enough
 async function loadQuestions(minimum = 1) {
   try {
-    const response = await fetch("../assets/tunisian_riddles_40.json");
+    const response = await fetch("../php/get_questions.php");
     if (!response.ok) throw new Error("Failed to load riddles.");
     questions = await response.json();
     if (!Array.isArray(questions) || questions.length < minimum) {
@@ -49,7 +45,7 @@ async function loadQuestions(minimum = 1) {
   } catch (error) {
     console.error(error);
     questionText.textContent =
-      "ما نجّمنـاش نحمّلو التشنشينات. عاود افتح اللعبة باستعمال Live Server.";
+      "ما نجّمنـاش نحمّلو التشنشينات. ثبّت إلّي سرفر PHP و MySQL يخدمو.";
     checkButton.disabled = true;
     skipButton.disabled = true;
     nextButton.disabled = true;
@@ -77,13 +73,12 @@ function updateProgress(value) {
 // put the new question on screen and clear the previous question state
 function showQuestion(question) {
   currentQuestion = question;
-  // text questions accept several spellings, but qcm has just one answer
-  if (Array.isArray(question.answer)) {
-    acceptedAnswers = question.answer;
-  } else {
-    acceptedAnswers = [question.answer];
-  }
-  questionStartTime = Date.now();
+  // the answer stays on the server until the question is finished
+  correctAnswer = "";
+  // tell php which question starts now, so the server keeps the clock and the attempts
+  const data = new FormData();
+  data.append("id", question.id);
+  fetch("../php/commencer_question.php", { method: "POST", body: data });
   attemptsLeft = MAX_ATTEMPTS;
   hintUsed = false;
   questionEnded = false;
@@ -92,7 +87,7 @@ function showQuestion(question) {
   quiz.dataset.type = question.type;
   questionText.textContent = question.question;
   hintText.textContent = question.hint;
-  correctAnswerDisplay.textContent = acceptedAnswers[0];
+  correctAnswerDisplay.textContent = "";
 
   // fill the four buttons and clear any old selection or result
   for (let i = 0; i < optionButtons.length; i++) {
@@ -128,15 +123,6 @@ function updateAttempts() {
   document.querySelector(".lives").setAttribute("aria-label", `${attemptsLeft} محاولات متبقّية`);
 }
 
-// take off five points for every full ten seconds, up to 25
-function calculateTimePenalty() {
-  const seconds = Math.floor((Date.now() - questionStartTime) / 1000);
-  return Math.min(
-    Math.floor(seconds / TIME_PENALTY_INTERVAL) * TIME_PENALTY_POINTS,
-    MAX_TIME_PENALTY
-  );
-}
-
 // add the points to the solo score or the player whose turn it is
 function addPoints(points) {
   if (versusMode) {
@@ -149,18 +135,40 @@ function addPoints(points) {
   }
 }
 
-// check the answer, update the points or attempts, and show the result
-function checkAnswer() {
-  if (gameOver || !currentQuestion || questionEnded) return;
+// send the answer to php, which checks it in the database and sends back the result
+async function checkAnswer() {
+  if (gameOver || !currentQuestion || questionEnded || waitingServer) return;
   const userAnswer = normalizeAnswer(answerInput.value);
   if (!userAnswer) {
     answerInput.focus();
     return;
   }
 
-  if (acceptedAnswers.some((answer) => userAnswer === normalizeAnswer(answer))) {
-    const basePoints = hintUsed ? POINTS_WITH_HINT : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
-    addPoints(Math.max(0, basePoints - calculateTimePenalty()));
+  const sentQuestion = currentQuestion;
+  const data = new FormData();
+  data.append("id", currentQuestion.id);
+  data.append("reponse", userAnswer);
+
+  let result = null;
+  waitingServer = true;
+  try {
+    const response = await fetch("../php/verifier_reponse.php", { method: "POST", body: data });
+    result = await response.json();
+  } catch (error) {
+    console.error(error);
+  }
+  waitingServer = false;
+
+  // do nothing if the server failed or the question changed while waiting
+  if (!result || currentQuestion !== sentQuestion || questionEnded) return;
+
+  // php sends the right answer only when the question is finished
+  correctAnswer = result.bonne_reponse;
+  correctAnswerDisplay.textContent = correctAnswer;
+
+  if (result.correct) {
+    // the points already include the attempt, the hint and the time penalty
+    addPoints(result.points);
     answerInput.removeAttribute("aria-invalid");
     endCurrentQuestion("correct");
     return;
@@ -193,7 +201,7 @@ function endCurrentQuestion(status) {
   for (let i = 0; i < optionButtons.length; i++) {
     const button = optionButtons[i];
     button.disabled = true;
-    if (button.textContent === currentQuestion.answer) {
+    if (button.textContent === correctAnswer) {
       button.dataset.result = "correct";
     } else if (button.dataset.selected === "true") {
       button.dataset.result = "wrong";
@@ -208,6 +216,8 @@ function revealHint() {
   if (!currentQuestion || currentQuestion.type === "qcm") return;
   if (gameOver || questionEnded || attemptsLeft !== 1 || hintUsed) return;
   hintUsed = true;
+  // php remembers the hint and gives fewer points
+  fetch("../php/ouvrir_indice.php", { method: "POST" });
   quiz.dataset.hintState = "revealed";
   hintToggle.setAttribute("aria-expanded", "true");
   hintToggle.disabled = true;
