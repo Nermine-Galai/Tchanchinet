@@ -18,6 +18,8 @@ const hintText = document.getElementById("hint-text");
 const POINTS_BY_ATTEMPT = [100, 80, 50];
 const POINTS_WITH_HINT = 25;
 const MAX_ATTEMPTS = 3;
+
+
 const TIME_PENALTY_INTERVAL = 10;
 const TIME_PENALTY_POINTS = 5;
 const MAX_TIME_PENALTY = 25;
@@ -29,6 +31,8 @@ let attemptsLeft = MAX_ATTEMPTS;
 let hintUsed = false;
 let questionEnded = false;
 let gameOver = false;
+
+
 let questionStartTime = 0;
 
 // ignore extra spaces; the allowed spellings stay in the json file
@@ -36,20 +40,29 @@ function normalizeAnswer(value) {
   return value.trim().replace(/\s+/g, " ");
 }
 
-// load the riddles and check there are enough before starting
+// Load questions from PHP and start the game
 async function loadQuestions(minimum = 1) {
   try {
-    const response = await fetch("../assets/tunisian_riddles_40.json");
-    if (!response.ok) throw new Error("Failed to load riddles.");
+    const response = await fetch("/Tchanchinet/php/get_questions.php");
+
+    if (!response.ok) {
+      throw new Error("Failed to load questions from PHP.");
+    }
+
     questions = await response.json();
+
     if (!Array.isArray(questions) || questions.length < minimum) {
       throw new Error("Not enough questions.");
     }
+
     startGame();
+
   } catch (error) {
     console.error(error);
+
     questionText.textContent =
-      "ما نجّمنـاش نحمّلو التشنشينات. عاود افتح اللعبة باستعمال Live Server.";
+      "ما نجّمنـاش نحمّلو التشنشينات. عاود المحاولة.";
+
     checkButton.disabled = true;
     skipButton.disabled = true;
     nextButton.disabled = true;
@@ -74,51 +87,79 @@ function updateProgress(value) {
   }
 }
 
-// put the new question on screen and clear the previous question state
-function showQuestion(question) {
+// Display a question and initialize its PHP session
+async function showQuestion(question) {
   currentQuestion = question;
-  // text questions accept several spellings, but qcm has just one answer
-  if (Array.isArray(question.answer)) {
-    acceptedAnswers = question.answer;
-  } else {
-    acceptedAnswers = [question.answer];
-  }
+  acceptedAnswers = [];
+
   questionStartTime = Date.now();
   attemptsLeft = MAX_ATTEMPTS;
   hintUsed = false;
   questionEnded = false;
+
   quiz.dataset.status = "ready";
   quiz.dataset.hintState = "hidden";
   quiz.dataset.type = question.type;
-  questionText.textContent = question.question;
-  hintText.textContent = question.hint;
-  correctAnswerDisplay.textContent = acceptedAnswers[0];
 
-  // fill the four buttons and clear any old selection or result
+  questionText.textContent = question.question;
+  hintText.textContent = "";
+  correctAnswerDisplay.textContent = "";
+
+  // Reset the four QCM buttons
   for (let i = 0; i < optionButtons.length; i++) {
     const button = optionButtons[i];
-    button.textContent = "";
-    if (question.options && question.options[i]) {
-      button.textContent = question.options[i];
-    }
-    button.disabled = false;
+    button.textContent = question.options?.[i] || "";
+    button.disabled = true;
     button.removeAttribute("data-selected");
     button.removeAttribute("data-result");
   }
 
+  // Disable controls until PHP initializes the question
   answerInput.value = "";
-  answerInput.disabled = false;
-  answerInput.removeAttribute("aria-invalid");
-  checkButton.disabled = false;
-  skipButton.disabled = false;
+  answerInput.disabled = true;
+  checkButton.disabled = true;
+  skipButton.disabled = true;
   nextButton.disabled = true;
   hintToggle.disabled = true;
+
   hintToggle.setAttribute("aria-expanded", "false");
   updateAttempts();
-  if (question.type === "qcm") {
-    optionButtons[0].focus();
-  } else {
-    answerInput.focus();
+
+  try {
+    const formData = new FormData();
+    formData.append("id", question.id);
+
+    const response = await fetch(
+      "/Tchanchinet/php/commencer_question.php",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Impossible de démarrer la question.");
+    }
+
+    // PHP successfully initialized the question
+    answerInput.disabled = false;
+    checkButton.disabled = false;
+    skipButton.disabled = false;
+
+    if (question.type === "qcm") {
+      optionButtons.forEach(button => {
+        button.disabled = !button.textContent;
+      });
+      optionButtons[0].focus();
+    } else {
+      answerInput.focus();
+    }
+
+  } catch (error) {
+    console.error(error);
+    questionText.textContent = "Erreur lors du démarrage de la question.";
   }
 }
 
@@ -150,35 +191,76 @@ function addPoints(points) {
 }
 
 // check the answer, update the points or attempts, and show the result
-function checkAnswer() {
+async function checkAnswer() {
   if (gameOver || !currentQuestion || questionEnded) return;
+
   const userAnswer = normalizeAnswer(answerInput.value);
+
   if (!userAnswer) {
     answerInput.focus();
     return;
   }
 
-  if (acceptedAnswers.some((answer) => userAnswer === normalizeAnswer(answer))) {
-    const basePoints = hintUsed ? POINTS_WITH_HINT : POINTS_BY_ATTEMPT[MAX_ATTEMPTS - attemptsLeft];
-    addPoints(Math.max(0, basePoints - calculateTimePenalty()));
-    answerInput.removeAttribute("aria-invalid");
-    endCurrentQuestion("correct");
-    return;
-  }
+  checkButton.disabled = true;
 
-  // one choice for qcm, three tries for a text question
-  attemptsLeft = currentQuestion.type === "qcm" ? 0 : attemptsLeft - 1;
-  answerInput.value = "";
-  answerInput.setAttribute("aria-invalid", "true");
-  quiz.dataset.status = "wrong";
-  updateAttempts();
-  if (attemptsLeft === 1) hintToggle.disabled = false;
-  if (attemptsLeft === 0) {
-    endCurrentQuestion("exhausted");
-    return;
+  try {
+    const formData = new FormData();
+    formData.append("id", currentQuestion.id);
+    formData.append("answer", userAnswer);
+
+    const response = await fetch(
+      "/Tchanchinet/php/verifier_reponse.php",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Erreur de vérification.");
+    }
+
+    attemptsLeft = result.attempts_left;
+    updateAttempts();
+
+    if (result.correct) {
+      addPoints(result.points);
+
+      correctAnswerDisplay.textContent = result.bonne_reponse;
+      answerInput.removeAttribute("aria-invalid");
+
+      endCurrentQuestion("correct");
+      return;
+    }
+
+    answerInput.value = "";
+    answerInput.setAttribute("aria-invalid", "true");
+    quiz.dataset.status = "wrong";
+
+    if (result.finished) {
+      correctAnswerDisplay.textContent = result.bonne_reponse;
+      endCurrentQuestion("exhausted");
+      return;
+    }
+
+    if (attemptsLeft === 1) {
+      hintToggle.disabled = false;
+    }
+
+    answerInput.focus();
+
+  } catch (error) {
+    console.error(error);
+    alert("Impossible de vérifier la réponse. Réessayez.");
+  } finally {
+    if (!questionEnded) {
+      checkButton.disabled = false;
+    }
   }
-  answerInput.focus();
 }
+
 
 // stop answers for this question, show the result and enable next
 function endCurrentQuestion(status) {
@@ -193,24 +275,53 @@ function endCurrentQuestion(status) {
   for (let i = 0; i < optionButtons.length; i++) {
     const button = optionButtons[i];
     button.disabled = true;
-    if (button.textContent === currentQuestion.answer) {
-      button.dataset.result = "correct";
-    } else if (button.dataset.selected === "true") {
-      button.dataset.result = "wrong";
-    }
+  if (
+    button.textContent === correctAnswerDisplay.textContent
+  ) {
+    button.dataset.result = "correct";
+  } else if (button.dataset.selected === "true") {
+    button.dataset.result = "wrong";
+  }
   }
   if (versusMode) updateProgress(turnsPlayed + 1);
   nextButton.focus();
 }
 
-// after two wrong tries, show the hint and lower the possible points
-function revealHint() {
+// Retrieve the hint from PHP after two incorrect attempts
+async function revealHint() {
   if (!currentQuestion || currentQuestion.type === "qcm") return;
   if (gameOver || questionEnded || attemptsLeft !== 1 || hintUsed) return;
-  hintUsed = true;
-  quiz.dataset.hintState = "revealed";
-  hintToggle.setAttribute("aria-expanded", "true");
+
   hintToggle.disabled = true;
+
+  try {
+    const formData = new FormData();
+    formData.append("id", currentQuestion.id);
+
+    const response = await fetch(
+      "/Tchanchinet/php/ouvrir_indice.php",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Impossible d'obtenir l'indice.");
+    }
+
+    hintUsed = true;
+    hintText.textContent = result.hint;
+    quiz.dataset.hintState = "revealed";
+    hintToggle.setAttribute("aria-expanded", "true");
+
+  } catch (error) {
+    console.error(error);
+    alert("Impossible de charger l'indice. Réessayez.");
+    hintToggle.disabled = false;
+  }
 }
 
 // use the clicked option as the answer and let the usual check handle it
@@ -270,8 +381,30 @@ function bindQuizControls() {
   nextButton.addEventListener("click", function () {
     slideQuestion(nextQuestion);
   });
-  skipButton.addEventListener("click", function () {
-    slideQuestion(skipQuestion);
+  skipButton.addEventListener("click", async function () {
+      if (gameOver || questionEnded || !currentQuestion) return;
+
+      skipButton.disabled = true;
+
+      try {
+          const response = await fetch(
+              "/Tchanchinet/php/terminer_question.php",
+              { method: "POST" }
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+              throw new Error(result.error || "Impossible de terminer la question.");
+          }
+
+          slideQuestion(skipQuestion);
+
+      } catch (error) {
+          console.error(error);
+          alert("Impossible de passer cette question. Réessayez.");
+          skipButton.disabled = false;
+      }
   });
   restartButton.addEventListener("click", startGame);
   hintToggle.addEventListener("click", revealHint);
