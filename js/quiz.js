@@ -60,19 +60,36 @@ function skipQuestion() {
   nextQuestion();
 }
 
-// save this game once, stop the timer and go to the results
-function finishGame(reason) {
+async function finishGame(reason) {
   if (gameOver) return;
+
   gameOver = true;
   clearInterval(timerInterval);
 
-  saveTopScores("soloBestScores", [{ score,
-     date: new Date().toLocaleDateString() }]);
+  try {
+    const response = await fetch("../php/save_score.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mode: "solo",
+        score: score
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Could not save solo score");
+    }
+  } catch (error) {
+    console.error("Score saving error:", error);
+  }
 
   sessionStorage.setItem("soloScore", String(score));
   sessionStorage.setItem("soloTotalQuestions", String(questions.length));
   sessionStorage.setItem("soloRemainingQuestions", String(remainingQuestions.length));
   sessionStorage.setItem("soloFinishReason", reason);
+
   window.location.href = "results.html";
 }
 
