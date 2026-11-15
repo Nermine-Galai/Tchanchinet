@@ -21,6 +21,5 @@
     message.textContent = "كمّلت التشنشينات الكل!";
   }
 
-  renderLeaderboard("best-scores-list",
-     "soloBestScores");
+  renderLeaderboard("best-scores-list", "soloBestScores");
 })();

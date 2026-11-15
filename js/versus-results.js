@@ -20,7 +20,5 @@
   document.getElementById("player-one-final-score").textContent = s1;
   document.getElementById("player-two-final-score").textContent = s2;
   document.getElementById("versus-result").dataset.winner = s1 === s2 ? "draw" : s1 > s2 ? "1" : "2";
-
-  renderLeaderboard("versus-best-scores",
-     "versusBestScores", true);
+  renderLeaderboard("versus-best-scores", "versusBestScores", true);
 })();

@@ -1,5 +1,5 @@
 // solo mode uses the shared rules, with a countdown added
-const TOTAL_TIME = 1*60;
+const TOTAL_TIME = 3 * 60;
 const timerDisplay = document.getElementById("timer");
 let remainingQuestions = [];
 let score = 0;
@@ -65,10 +65,7 @@ function finishGame(reason) {
   if (gameOver) return;
   gameOver = true;
   clearInterval(timerInterval);
-
-  saveTopScores("soloBestScores", [{ score,
-     date: new Date().toLocaleDateString() }]);
-
+  saveTopScores("soloBestScores", [{ score, date: new Date().toLocaleDateString() }]);
   sessionStorage.setItem("soloScore", String(score));
   sessionStorage.setItem("soloTotalQuestions", String(questions.length));
   sessionStorage.setItem("soloRemainingQuestions", String(remainingQuestions.length));
