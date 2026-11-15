@@ -38,12 +38,16 @@ async function loadQuestions(minimum = 1) {
     const response = await fetch("../php/get_questions.php");
     if (!response.ok) throw new Error("Failed to load riddles.");
     questions = await response.json();
+
     if (!Array.isArray(questions) || questions.length < minimum) {
       throw new Error("Not enough questions.");
     }
+
     startGame();
+
   } catch (error) {
     console.error(error);
+
     questionText.textContent =
       "ما نجّمنـاش نحمّلو التشنشينات. ثبّت إلّي سرفر PHP و MySQL يخدمو.";
     checkButton.disabled = true;
@@ -70,8 +74,8 @@ function updateProgress(value) {
   }
 }
 
-// put the new question on screen and clear the previous question state
-function showQuestion(question) {
+// Display a question and initialize its PHP session
+async function showQuestion(question) {
   currentQuestion = question;
   // the answer stays on the server until the question is finished
   correctAnswer = "";
@@ -82,38 +86,70 @@ function showQuestion(question) {
   attemptsLeft = MAX_ATTEMPTS;
   hintUsed = false;
   questionEnded = false;
+
   quiz.dataset.status = "ready";
   quiz.dataset.hintState = "hidden";
   quiz.dataset.type = question.type;
+
   questionText.textContent = question.question;
   hintText.textContent = question.hint;
   correctAnswerDisplay.textContent = "";
 
-  // fill the four buttons and clear any old selection or result
+  // Reset the four QCM buttons
   for (let i = 0; i < optionButtons.length; i++) {
     const button = optionButtons[i];
-    button.textContent = "";
-    if (question.options && question.options[i]) {
-      button.textContent = question.options[i];
-    }
-    button.disabled = false;
+    button.textContent = question.options?.[i] || "";
+    button.disabled = true;
     button.removeAttribute("data-selected");
     button.removeAttribute("data-result");
   }
 
+  // Disable controls until PHP initializes the question
   answerInput.value = "";
-  answerInput.disabled = false;
-  answerInput.removeAttribute("aria-invalid");
-  checkButton.disabled = false;
-  skipButton.disabled = false;
+  answerInput.disabled = true;
+  checkButton.disabled = true;
+  skipButton.disabled = true;
   nextButton.disabled = true;
   hintToggle.disabled = true;
+
   hintToggle.setAttribute("aria-expanded", "false");
   updateAttempts();
-  if (question.type === "qcm") {
-    optionButtons[0].focus();
-  } else {
-    answerInput.focus();
+
+  try {
+    const formData = new FormData();
+    formData.append("id", question.id);
+
+    const response = await fetch(
+      "/Tchanchinet/php/commencer_question.php",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Impossible de démarrer la question.");
+    }
+
+    // PHP successfully initialized the question
+    answerInput.disabled = false;
+    checkButton.disabled = false;
+    skipButton.disabled = false;
+
+    if (question.type === "qcm") {
+      optionButtons.forEach(button => {
+        button.disabled = !button.textContent;
+      });
+      optionButtons[0].focus();
+    } else {
+      answerInput.focus();
+    }
+
+  } catch (error) {
+    console.error(error);
+    questionText.textContent = "Erreur lors du démarrage de la question.";
   }
 }
 
@@ -139,6 +175,7 @@ function addPoints(points) {
 async function checkAnswer() {
   if (gameOver || !currentQuestion || questionEnded || waitingServer) return;
   const userAnswer = normalizeAnswer(answerInput.value);
+
   if (!userAnswer) {
     answerInput.focus();
     return;
@@ -174,19 +211,32 @@ async function checkAnswer() {
     return;
   }
 
-  // one choice for qcm, three tries for a text question
-  attemptsLeft = currentQuestion.type === "qcm" ? 0 : attemptsLeft - 1;
-  answerInput.value = "";
-  answerInput.setAttribute("aria-invalid", "true");
-  quiz.dataset.status = "wrong";
-  updateAttempts();
-  if (attemptsLeft === 1) hintToggle.disabled = false;
-  if (attemptsLeft === 0) {
-    endCurrentQuestion("exhausted");
-    return;
+    answerInput.value = "";
+    answerInput.setAttribute("aria-invalid", "true");
+    quiz.dataset.status = "wrong";
+
+    if (result.finished) {
+      correctAnswerDisplay.textContent = result.bonne_reponse;
+      endCurrentQuestion("exhausted");
+      return;
+    }
+
+    if (attemptsLeft === 1) {
+      hintToggle.disabled = false;
+    }
+
+    answerInput.focus();
+
+  } catch (error) {
+    console.error(error);
+    alert("Impossible de vérifier la réponse. Réessayez.");
+  } finally {
+    if (!questionEnded) {
+      checkButton.disabled = false;
+    }
   }
-  answerInput.focus();
 }
+
 
 // stop answers for this question, show the result and enable next
 function endCurrentQuestion(status) {
@@ -211,8 +261,8 @@ function endCurrentQuestion(status) {
   nextButton.focus();
 }
 
-// after two wrong tries, show the hint and lower the possible points
-function revealHint() {
+// Retrieve the hint from PHP after two incorrect attempts
+async function revealHint() {
   if (!currentQuestion || currentQuestion.type === "qcm") return;
   if (gameOver || questionEnded || attemptsLeft !== 1 || hintUsed) return;
   hintUsed = true;
@@ -221,6 +271,35 @@ function revealHint() {
   quiz.dataset.hintState = "revealed";
   hintToggle.setAttribute("aria-expanded", "true");
   hintToggle.disabled = true;
+
+  try {
+    const formData = new FormData();
+    formData.append("id", currentQuestion.id);
+
+    const response = await fetch(
+      "/Tchanchinet/php/ouvrir_indice.php",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Impossible d'obtenir l'indice.");
+    }
+
+    hintUsed = true;
+    hintText.textContent = result.hint;
+    quiz.dataset.hintState = "revealed";
+    hintToggle.setAttribute("aria-expanded", "true");
+
+  } catch (error) {
+    console.error(error);
+    alert("Impossible de charger l'indice. Réessayez.");
+    hintToggle.disabled = false;
+  }
 }
 
 // use the clicked option as the answer and let the usual check handle it
@@ -280,8 +359,30 @@ function bindQuizControls() {
   nextButton.addEventListener("click", function () {
     slideQuestion(nextQuestion);
   });
-  skipButton.addEventListener("click", function () {
-    slideQuestion(skipQuestion);
+  skipButton.addEventListener("click", async function () {
+      if (gameOver || questionEnded || !currentQuestion) return;
+
+      skipButton.disabled = true;
+
+      try {
+          const response = await fetch(
+              "/Tchanchinet/php/terminer_question.php",
+              { method: "POST" }
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+              throw new Error(result.error || "Impossible de terminer la question.");
+          }
+
+          slideQuestion(skipQuestion);
+
+      } catch (error) {
+          console.error(error);
+          alert("Impossible de passer cette question. Réessayez.");
+          skipButton.disabled = false;
+      }
   });
   restartButton.addEventListener("click", startGame);
   hintToggle.addEventListener("click", revealHint);
