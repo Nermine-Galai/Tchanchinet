@@ -1,5 +1,5 @@
 // show the solo result and the saved best scores
-(function showSoloResults() {
+(async function showSoloResults() {
   const raw = sessionStorage.getItem("soloScore");
   if (raw === null) {
     window.location.replace("../index.html");
@@ -21,5 +21,5 @@
     message.textContent = "كمّلت التشنشينات الكل!";
   }
 
-  renderLeaderboard("best-scores-list", "soloBestScores");
+  await renderLeaderboard("best-scores-list", "solo");
 })();

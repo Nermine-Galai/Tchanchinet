@@ -1,5 +1,5 @@
 // show both scores, who won or if it was a draw, and the best scores
-(function showVersusResults() {
+(async function showVersusResults() {
   let data = null;
   try {
     data = JSON.parse(sessionStorage.getItem("versusResult"));
@@ -20,5 +20,5 @@
   document.getElementById("player-one-final-score").textContent = s1;
   document.getElementById("player-two-final-score").textContent = s2;
   document.getElementById("versus-result").dataset.winner = s1 === s2 ? "draw" : s1 > s2 ? "1" : "2";
-  renderLeaderboard("versus-best-scores", "versusBestScores", true);
+  await renderLeaderboard("versus-best-scores", "versus", true);
 })();

@@ -107,18 +107,45 @@ function nextQuestion() {
 }
 
 // save both scores once and open the results page
-function finishGame() {
+async function finishGame() {
   if (gameOver) return;
+
   gameOver = true;
-  saveTopScores("versusBestScores", [1, 2].map((n) => ({
+
+  const results = [1, 2].map((n) => ({
     name: players[n].name,
-    score: players[n].score,
-    date: new Date().toLocaleDateString(),
-  })));
-  sessionStorage.setItem("versusResult", JSON.stringify({
-    player1: { name: players[1].name, score: players[1].score },
-    player2: { name: players[2].name, score: players[2].score },
+    score: players[n].score
   }));
+
+  try {
+    await Promise.all(
+      results.map((player) =>
+        fetch("../php/save_score.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            mode: "versus",
+            name: player.name,
+            score: player.score
+          })
+        }).then((response) => {
+          if (!response.ok) {
+            throw new Error("Could not save versus score");
+          }
+        })
+      )
+    );
+  } catch (error) {
+    console.error("Versus score saving error:", error);
+  }
+
+  sessionStorage.setItem("versusResult", JSON.stringify({
+    player1: results[0],
+    player2: results[1]
+  }));
+
   window.location.href = "versus-results.html";
 }
 
