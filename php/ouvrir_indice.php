@@ -1,10 +1,10 @@
 <?php
-// appelé par le JavaScript quand le joueur ouvre l'indice : le serveur s'en souvient
+// called by javascript when the player opens the hint: the server remembers it
 session_start();
 
 $ouvert = false;
 
-// l'indice s'ouvre seulement après 2 mauvaises réponses
+// the hint opens only after 2 wrong answers
 if (isset($_SESSION['essais']) && $_SESSION['essais'] == 2 && $_SESSION['fini'] == 0) {
     $_SESSION['indice'] = 1;
     $ouvert = true;

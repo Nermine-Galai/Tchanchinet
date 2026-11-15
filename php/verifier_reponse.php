@@ -1,11 +1,11 @@
 <?php
-// reçoit une réponse du JavaScript, la vérifie dans la base et calcule les points côté serveur
+// receives an answer from javascript, checks it in the database and calculates the points on the server
 session_start();
 include('connexion.php');
 
 $resultat = array("correct" => false, "points" => 0, "bonne_reponse" => "");
 
-// la question en cours est celle que le serveur a notée dans la session
+// the current question is the one the server noted in the session
 if (isset($_POST['id']) && isset($_POST['reponse']) && isset($_SESSION['question_id'])
     && $_POST['id'] == $_SESSION['question_id'] && $_SESSION['fini'] == 0) {
     $reponse = trim($_POST['reponse']);
@@ -16,10 +16,10 @@ if (isset($_POST['id']) && isset($_POST['reponse']) && isset($_SESSION['question
 
     if (count($lignes) == 1) {
         $type = $lignes[0]['type'];
-        // les écritures acceptées sont dans une seule case, séparées par |
+        // the accepted spellings are in one cell, separated by |
         $reponses = explode("|", $lignes[0]['answer']);
 
-        // c'est le serveur qui compte les essais : 1, 2 ou 3
+        // the server counts the attempts itself: 1, 2 or 3
         $_SESSION['essais'] = $_SESSION['essais'] + 1;
         $essai = $_SESSION['essais'];
 
@@ -30,7 +30,7 @@ if (isset($_POST['id']) && isset($_POST['reponse']) && isset($_SESSION['question
         }
 
         if ($resultat["correct"]) {
-            // moins de points à chaque essai, et 25 seulement avec l'indice
+            // fewer points at each attempt, and only 25 with the hint
             $points_par_essai = array(100, 80, 50);
             if ($_SESSION['indice'] == 1) {
                 $points = 25;
@@ -38,7 +38,7 @@ if (isset($_POST['id']) && isset($_POST['reponse']) && isset($_SESSION['question
                 $points = $points_par_essai[$essai - 1];
             }
 
-            // pénalité de temps : 5 points par 10 secondes complètes, 25 au maximum
+            // time penalty: 5 points per full 10 seconds, 25 at most
             $secondes = time() - $_SESSION['debut'];
             $penalite = floor($secondes / 10) * 5;
             if ($penalite > 25) {
@@ -52,7 +52,7 @@ if (isset($_POST['id']) && isset($_POST['reponse']) && isset($_SESSION['question
             $resultat["points"] = $points;
         }
 
-        // la question est finie : bonne réponse, 3e essai, ou QCM (un seul choix)
+        // the question is finished: right answer, 3rd attempt, or qcm (one choice only)
         if ($resultat["correct"] || $essai == 3 || $type == "qcm") {
             $_SESSION['fini'] = 1;
             $resultat["bonne_reponse"] = $reponses[0];

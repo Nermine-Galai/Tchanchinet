@@ -1,5 +1,5 @@
 <?php
-// envoie les questions au JavaScript en JSON, sans les réponses
+// sends the questions to javascript as json, without the answers
 include('connexion.php');
 
 $req = $pdo->query("SELECT id, type, question, hint, options FROM questions");
@@ -13,7 +13,7 @@ foreach ($lignes as $ligne) {
         "question" => $ligne['question'],
         "hint" => $ligne['hint']
     );
-    // les 4 options d'un QCM sont dans une seule case, séparées par |
+    // the 4 options of a qcm are in one cell, separated by |
     if ($ligne['type'] == "qcm") {
         $question["options"] = explode("|", $ligne['options']);
     }

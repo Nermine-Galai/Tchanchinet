@@ -1,9 +1,9 @@
 <?php
-// connexion à la base MySQL (créez d'abord la base « tchanchinet » avec phpMyAdmin)
+// connection to the mysql database (first create the "tchanchinet" database with phpMyAdmin)
 $servername = "localhost";
 $database = "tchanchinet";
 $username = "root";
-$password = "";   // vide avec XAMPP, à adapter à votre installation
+$password = "";   // empty with XAMPP, change it for your installation
 
 try {
     $pdo = new PDO("mysql:host=$servername;dbname=$database;charset=utf8mb4", $username, $password);

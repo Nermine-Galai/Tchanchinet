@@ -1,9 +1,17 @@
 # Tchanchinet
 
 A Tunisian riddle game ("تشنشينة") for the browser, built with plain HTML, CSS and
-JavaScript. The interface is in Arabic (right-to-left). Players answer riddles
-from a bank of 70 in two modes: **solo** against the clock, or **two players** on
-the same device.
+JavaScript, with a PHP and MySQL part for the questions. The interface is in
+Arabic (right-to-left). Players answer riddles from a bank of 70 in two modes:
+**solo** against the clock, or **two players** on the same device.
+
+Current state of the project:
+
+- **Done:** the HTML, CSS and JavaScript game, and the PHP part for the
+  `questions` table (riddles stored in MySQL, answers checked and scored on the
+  server).
+- **Not added yet:** the PHP part for the `scores` table. Scores are still saved
+  in the browser with `localStorage`.
 
 Mini web project, FIA3, ISSAT Sousse, academic year 2026/2027.
 By Nermine Galai and Sarra Gharbi. The full report is in [rapport.pdf](rapport.pdf).
@@ -17,20 +25,26 @@ The JavaScript part follows **sujet 7, "Page de quiz interactif"**:
 | Immediate feedback after each answer | `data-status` on `#quiz`, styled in `css/quiz-shared.css` |
 | Best scores saved in `localStorage` | `js/scores.js` |
 | Bonus: replay with full reset | `startGame` in `js/quiz.js` and `js/versus-quiz.js` |
-| Bonus: different question types | Text and QCM riddles in the JSON file |
+| Bonus: different question types | Text and QCM riddles in the `questions` table |
 | Bonus: visual progress bar | `updateProgress` in `js/quiz-shared.js` |
 | Bonus: transition between questions | `js/quiz-transition.js` |
 
 Plain ("vanilla") JavaScript only, no libraries.
 
 The PHP part of sujet 7 is split by database table. The **questions** table is
-done here; the **scores** table is the other half of the work.
+done; the **scores** table (saving and ranking the scores in the database) is
+not added yet.
 
 | PHP requirement | Where it is done |
 | --- | --- |
 | Questions and answers stored in the database | `php/installer_questions.php` creates and fills the `questions` table; phpMyAdmin is used to add, modify or delete a question |
 | Answers checked and scored on the server | `php/verifier_reponse.php`, with `php/commencer_question.php` and `php/ouvrir_indice.php` |
-| JavaScript ↔ PHP communication | `fetch` in `js/quiz-shared.js` calls the four PHP files below |
+| JavaScript ↔ PHP communication | `fetch` in `js/quiz-shared.js` calls `get_questions.php`, `commencer_question.php`, `ouvrir_indice.php` and `verifier_reponse.php` |
+| Scores saved and ranked in the database | Not added yet |
+
+Native PHP only, no framework. The comments in the PHP files are in English;
+the variable names and the JSON keys sent to JavaScript are in French
+(`reponse`, `essais`, `indice`, `bonne_reponse`).
 
 ## Game modes and rules
 
@@ -231,7 +245,8 @@ with dates and VS player names. Restart keeps these leaderboards.
 
 ## Lighthouse scores
 
-Measured with Lighthouse while the site ran on Live Server:
+Measured with Lighthouse while the site ran on Live Server, on the JavaScript
+version of the project (before the PHP part was added):
 
 | Page | Performance | Accessibility | Best Practices | SEO |
 | --- | --- | --- | --- | --- |
@@ -268,8 +283,20 @@ Scoring and length are constants at the top of the scripts:
 - Best scores survive a browser restart and keep only the top five per mode.
 - Winner and draw screens; refreshing or opening results directly.
 - Keyboard-only use, long Arabic text, phone layout.
+- PHP: `php/get_questions.php` opened in the browser shows 70 questions and no
+  `answer` field.
+- PHP: in the browser's Network tab, each answer calls `verifier_reponse.php`,
+  and its response has `correct`, `points` and `bonne_reponse` (empty until the
+  question is finished).
+- PHP: with MySQL stopped, the quiz shows an error message instead of a question.
 
 ## Known limitations
 
 - Both VS players share one device.
+- Scores are not saved in the database yet; they stay in the browser's
+  `localStorage`.
+- Questions are added, modified or deleted in phpMyAdmin; there is no
+  management page.
+- The PHP server remembers one question at a time for each browser (PHP
+  session), so the game should be played in one tab at a time.
 

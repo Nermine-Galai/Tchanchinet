@@ -1,8 +1,8 @@
 <?php
-// à ouvrir une seule fois : crée la table « questions » et y met les 70 tchanchinet du jeu
+// open this page once: it creates the "questions" table and puts the 70 riddles of the game in it
 include('connexion.php');
 
-// answer : les écritures acceptées séparées par |   options : les 4 choix d'un QCM séparés par |
+// answer: the accepted spellings separated by |   options: the 4 choices of a qcm separated by |
 $pdo->exec("CREATE TABLE IF NOT EXISTS questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     type VARCHAR(10) NOT NULL,
@@ -12,7 +12,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS questions (
     options VARCHAR(255) NOT NULL
 )");
 
-// si la table contient déjà des questions, on n'ajoute rien pour ne pas les avoir en double
+// if the table already has questions, add nothing so they are not there twice
 $req = $pdo->query("SELECT id FROM questions");
 $lignes = $req->fetchAll(PDO::FETCH_ASSOC);
 
