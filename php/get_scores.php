@@ -22,4 +22,4 @@ $stmt = $pdo->prepare(
 
 $stmt->execute([$mode]);
 
-echo json_encode($stmt->fetchAll(), JSON_UNESCAPED_UNICODE);
+echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC), JSON_UNESCAPED_UNICODE);

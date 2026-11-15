@@ -5,13 +5,13 @@ JavaScript, with a PHP and MySQL part for the questions. The interface is in
 Arabic (right-to-left). Players answer riddles from a bank of 70 in two modes:
 **solo** against the clock, or **two players** on the same device.
 
-Current state of the project:
+The project has three parts, all done:
 
-- **Done:** the HTML, CSS and JavaScript game, and the PHP part for the
-  `questions` table (riddles stored in MySQL, answers checked and scored on the
-  server).
-- **Not added yet:** the PHP part for the `scores` table. Scores are still saved
-  in the browser with `localStorage`.
+- the HTML, CSS and JavaScript game;
+- the PHP part for the `questions` table (riddles stored in MySQL, answers
+  checked and scored on the server);
+- the PHP part for the `scores` table (scores saved in MySQL at the end of each
+  game, and the five best shown on the results pages).
 
 Mini web project, FIA3, ISSAT Sousse, academic year 2026/2027.
 By Nermine Galai and Sarra Gharbi. The full report is in [rapport.pdf](rapport.pdf).
@@ -23,7 +23,7 @@ The JavaScript part follows **sujet 7, "Page de quiz interactif"**:
 | Countdown timer per question | Solo 3-minute countdown in `js/quiz.js`, plus a hidden clock per question kept by PHP in the session |
 | Dynamic score with time penalties | `php/verifier_reponse.php` calculates the points and the penalty; `checkAnswer` in `js/quiz-shared.js` displays them |
 | Immediate feedback after each answer | `data-status` on `#quiz`, styled in `css/quiz-shared.css` |
-| Best scores saved in `localStorage` | `js/scores.js` |
+| Best scores saved | First done with `localStorage`; now saved in the MySQL `scores` table (see the PHP part) |
 | Bonus: replay with full reset | `startGame` in `js/quiz.js` and `js/versus-quiz.js` |
 | Bonus: different question types | Text and QCM riddles in the `questions` table |
 | Bonus: visual progress bar | `updateProgress` in `js/quiz-shared.js` |
@@ -31,16 +31,15 @@ The JavaScript part follows **sujet 7, "Page de quiz interactif"**:
 
 Plain ("vanilla") JavaScript only, no libraries.
 
-The PHP part of sujet 7 is split by database table. The **questions** table is
-done; the **scores** table (saving and ranking the scores in the database) is
-not added yet.
+The PHP part of sujet 7 is split by database table: the **questions** table
+and the **scores** table.
 
 | PHP requirement | Where it is done |
 | --- | --- |
 | Questions and answers stored in the database | `php/installer_questions.php` creates and fills the `questions` table; phpMyAdmin is used to add, modify or delete a question |
 | Answers checked and scored on the server | `php/verifier_reponse.php`, with `php/commencer_question.php` and `php/ouvrir_indice.php` |
-| JavaScript ↔ PHP communication | `fetch` in `js/quiz-shared.js` calls `get_questions.php`, `commencer_question.php`, `ouvrir_indice.php` and `verifier_reponse.php` |
-| Scores saved and ranked in the database | Not added yet |
+| Scores saved and ranked in the database | `php/installer_scores.php` creates the `scores` table; `php/save_score.php` saves a score; `php/get_scores.php` returns the five best of a mode |
+| JavaScript ↔ PHP communication | `fetch` in `js/quiz-shared.js` calls `get_questions.php`, `commencer_question.php`, `ouvrir_indice.php` and `verifier_reponse.php`; `fetch` in `js/quiz.js`, `js/versus-quiz.js` and `js/scores.js` calls `save_score.php` and `get_scores.php` |
 
 Native PHP only, no framework. The comments in the PHP files are in English;
 the variable names and the JSON keys sent to JavaScript are in French
@@ -98,8 +97,10 @@ project needs a PHP server and MySQL (XAMPP for example).
    (or copy the folder into `C:\xampp\htdocs` and start Apache).
 4. Open `http://localhost:8000/php/installer_questions.php` **once**: it creates
    the `questions` table and fills it with the 70 riddles.
-5. Play at `http://localhost:8000/index.html`.
-6. To add, modify or delete a question, open the `questions` table in phpMyAdmin.
+5. Open `http://localhost:8000/php/installer_scores.php` **once**: it creates the
+   empty `scores` table.
+6. Play at `http://localhost:8000/index.html`.
+7. To add, modify or delete a question, open the `questions` table in phpMyAdmin.
 
 The database name, user and password are in `php/connexion.php` (`root` with an
 empty password, the XAMPP default).
@@ -119,7 +120,7 @@ Tchanchinet/
 │   ├── quiz.js
 │   ├── quiz-shared.js          Shared questions, answers, scoring and controls
 │   ├── quiz-transition.js      Slide animation for both modes
-│   ├── scores.js               Shared leaderboard saving and display
+│   ├── scores.js               Loads and displays both leaderboards
 │   ├── results.js
 │   ├── versus-quiz.js
 │   └── versus-results.js
@@ -132,13 +133,16 @@ Tchanchinet/
 │   ├── versus.css             Player name form
 │   ├── versus-quiz.css        Two-player quiz
 │   └── versus-results.css     Two-player result
-├── php/                       Server side (questions table)
+├── php/                       Server side (questions and scores tables)
 │   ├── connexion.php           PDO connection to the `tchanchinet` database
 │   ├── installer_questions.php Creates and fills the `questions` table (run once)
 │   ├── get_questions.php       Sends the questions to JavaScript as JSON, without answers
 │   ├── commencer_question.php  Notes in the session which question starts and when
 │   ├── ouvrir_indice.php       Notes in the session that the hint was opened
-│   └── verifier_reponse.php    Checks one answer, calculates the points, sends back the correction
+│   ├── verifier_reponse.php    Checks one answer, calculates the points, sends back the correction
+│   ├── installer_scores.php    Creates the `scores` table (run once)
+│   ├── save_score.php          Saves one score at the end of a game
+│   └── get_scores.php          Sends the five best scores of a mode as JSON
 ├── assets/                   Artwork and riddle data
 │   ├── *.png, *.jpg, *.webp    Original artwork and optimised WebP images
 │   └── tunisian_riddles_40.json   The 70 riddles of the JavaScript version (now copied into the database)
@@ -194,7 +198,7 @@ quiz page. Links between game pages use the filename because they share `pages/`
 **Shared code.** `js/quiz-shared.js` handles question loading, text and QCM
 answers, attempts, hints, scoring, penalties, progress colors and controls.
 `js/quiz.js` handles the solo countdown; `js/versus-quiz.js` handles player names
-and turns. `js/scores.js` saves and displays both leaderboards. Each function
+and turns. `js/scores.js` loads and displays both leaderboards. Each function
 has a short comment explaining its purpose.
 The bonus sections use plain `for` loops, named click handlers and `if/else`
 blocks for the QCM choices, replay and progress colors.
@@ -225,9 +229,23 @@ JavaScript. Scores are saved in `sessionStorage` at the end of a game and read b
 the results page. A results page opened without a finished game redirects to
 `index.html` for solo mode or `pages/versus.html` for two-player mode.
 
-**Best scores.** Each finished game saves its scores in `localStorage`:
-`soloBestScores` or `versusBestScores`. Each list keeps the five highest scores,
-with dates and VS player names. Restart keeps these leaderboards.
+**Best scores (JS → PHP → MySQL).** The `scores` table has the columns `id`,
+`game_mode` (`solo` or `versus`), `player_name` (empty in solo mode), `score`
+and `created_at` (filled by MySQL when the row is saved).
+
+- **Saving.** At the end of a game, `finishGame` sends the score to
+  `php/save_score.php` with a POST `fetch` in JSON: once in solo mode
+  (`mode`, `score`), and once per player in two-player mode (`mode`, `name`,
+  `score`). It waits for the answer before opening the results page. PHP checks
+  the values and inserts the row with a prepared query.
+- **Ranking.** On the results pages, `renderLeaderboard` in `js/scores.js` calls
+  `php/get_scores.php?mode=solo` or `?mode=versus`. PHP returns the five highest
+  scores of that mode, with the date and the player name; when two scores are
+  equal, the older one comes first.
+
+The scores were first kept in `localStorage` (JavaScript part); they are now
+only in the database, so the leaderboards are the same in every browser.
+Restart keeps the leaderboards.
 
 **Results.** `js/versus-results.js` compares the scores and sets `data-winner` on
 `#versus-result` to `1`, `2` or `draw`; the CSS shows the matching message.
@@ -280,7 +298,8 @@ Scoring and length are constants at the top of the scripts:
 - QCM: one choice, correct option in green and wrong choice in red.
 - The progress bar turns yellow, then red; the slide is skipped with reduced motion.
 - Restart resets the score, timer, bar and questions but keeps the best scores.
-- Best scores survive a browser restart and keep only the top five per mode.
+- Best scores survive a browser restart, and each leaderboard shows only the
+  top five of its mode.
 - Winner and draw screens; refreshing or opening results directly.
 - Keyboard-only use, long Arabic text, phone layout.
 - PHP: `php/get_questions.php` opened in the browser shows 70 questions and no
@@ -289,12 +308,18 @@ Scoring and length are constants at the top of the scripts:
   and its response has `correct`, `points` and `bonne_reponse` (empty until the
   question is finished).
 - PHP: with MySQL stopped, the quiz shows an error message instead of a question.
+- PHP: at the end of a game the Network tab shows `save_score.php` (twice in
+  two-player mode), and a new row appears in the `scores` table.
+- PHP: `php/get_scores.php?mode=solo` and `?mode=versus` return at most five
+  scores, highest first, and the results pages show the same list.
 
 ## Known limitations
 
 - Both VS players share one device.
-- Scores are not saved in the database yet; they stay in the browser's
-  `localStorage`.
+- The final score is sent by the browser, and `save_score.php` only checks that
+  it is a positive number; each answer is scored on the server, but the total
+  is not.
+- Solo scores are saved without a player name.
 - Questions are added, modified or deleted in phpMyAdmin; there is no
   management page.
 - The PHP server remembers one question at a time for each browser (PHP

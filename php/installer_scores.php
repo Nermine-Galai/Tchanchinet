@@ -6,10 +6,10 @@ include('connexion.php');
 // created_at: filled by mysql with the date and time when the score is saved
 $pdo->exec("CREATE TABLE IF NOT EXISTS scores (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    game_mode VARCHAR(10) NOT NULL,
-    player_name VARCHAR(50),
+    game_mode ENUM('solo', 'versus') NOT NULL,
+    player_name VARCHAR(100) DEFAULT NULL,
     score INT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
 
 // count the scores already saved, to show that the table is ready
